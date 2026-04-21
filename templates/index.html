@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Error Log Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; color: #333; }
+
+    header {
+      background: #1e3a5f;
+      color: white;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 { font-size: 1.2rem; font-weight: 600; }
+
+    .toolbar {
+      padding: 16px 32px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-primary { background: #1e3a5f; color: white; }
+    .btn-primary:hover { background: #2a4f7f; }
+    .btn-secondary { background: #e2e8f0; color: #333; }
+    .btn-secondary:hover { background: #cbd5e0; }
+    .btn-success { background: #2d6a4f; color: white; }
+    .btn-success:hover { background: #3a7d5f; }
+
+    .flash-list { padding: 0 32px; }
+    .flash {
+      padding: 10px 16px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      font-size: 0.875rem;
+    }
+    .flash.success { background: #d4edda; color: #155724; }
+    .flash.error   { background: #f8d7da; color: #721c24; }
+
+    .table-wrap { padding: 0 32px 32px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    thead { background: #1e3a5f; color: white; }
+    th, td { padding: 11px 14px; text-align: left; font-size: 0.85rem; }
+    th { font-weight: 600; white-space: nowrap; }
+    tbody tr { border-bottom: 1px solid #e8ecf0; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #f0f4f8; cursor: pointer; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .badge-pending  { background: #fff3cd; color: #856404; }
+    .badge-resolved { background: #d4edda; color: #155724; }
+
+    .text-muted { color: #888; font-style: italic; font-size: 0.82rem; }
+    .truncate { max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .empty { text-align: center; padding: 48px; color: #aaa; font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Error Log Tracker</h1>
+  <span style="font-size:0.8rem; opacity:0.7;">error_log 연동</span>
+</header>
+
+<div class="flash-list">
+  {% for category, message in get_flashed_messages(with_categories=true) %}
+    <div class="flash {{ category }}">{{ message }}</div>
+  {% endfor %}
+</div>
+
+<div class="toolbar">
+  <a href="{{ url_for('sync') }}" class="btn btn-primary">동기화</a>
+
+  {% if show_resolved %}
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">미완료만 보기</a>
+    <a href="{{ url_for('export', show_resolved=1) }}" class="btn btn-success">Excel 추출 (전체)</a>
+  {% else %}
+    <a href="{{ url_for('index', show_resolved=1) }}" class="btn btn-secondary">완료 건 포함 보기</a>
+    <a href="{{ url_for('export') }}" class="btn btn-success">Excel 추출 (미완료)</a>
+  {% endif %}
+
+  <span style="margin-left:auto; font-size:0.85rem; color:#666;">
+    {{ rows|length }}건
+  </span>
+</div>
+
+<div class="table-wrap">
+  {% if rows %}
+  <table>
+    <thead>
+      <tr>
+        <th>발생 시각</th>
+        <th>파일명</th>
+        <th>테이블명</th>
+        <th>오류 내용</th>
+        <th>원인 파악</th>
+        <th>조치 필요 내용</th>
+        <th>조치 여부</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr onclick="location.href='{{ url_for('detail', file_uuid_id=r['file_uuid_id']) }}'">
+        <td style="white-space:nowrap;">{{ r['create_ts'] }}</td>
+        <td class="truncate">{{ r['file_name'] }}</td>
+        <td>{{ r['table_name'] }}</td>
+        <td class="truncate">{{ r['error'] }}</td>
+        <td class="truncate">
+          {% if r['root_cause'] %}{{ r['root_cause'] }}
+          {% else %}<span class="text-muted">미입력</span>{% endif %}
+        </td>
+        <td class="truncate">
+          {% if r['action_required'] %}{{ r['action_required'] }}
+          {% else %}<span class="text-muted">미입력</span>{% endif %}
+        </td>
+        <td>
+          {% if r['resolved'] %}
+            <span class="badge badge-resolved">완료</span>
+          {% else %}
+            <span class="badge badge-pending">미완료</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="empty">표시할 오류 건이 없습니다.</div>
+  {% endif %}
+</div>
+
+</body>
+</html>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Error Log Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; color: #333; }
+
+    header {
+      background: #1e3a5f;
+      color: white;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    header a { color: #a8c4e0; text-decoration: none; font-size: 0.9rem; }
+    header a:hover { color: white; }
+    header h1 { font-size: 1.1rem; font-weight: 600; }
+
+    .container { max-width: 860px; margin: 32px auto; padding: 0 16px; }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      padding: 28px 32px;
+      margin-bottom: 24px;
+    }
+    .card h2 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1e3a5f;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 10px;
+      margin-bottom: 18px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .field-grid { display: grid; grid-template-columns: 140px 1fr; gap: 10px 16px; align-items: start; }
+    .field-label { font-size: 0.83rem; color: #666; font-weight: 600; padding-top: 2px; }
+    .field-value { font-size: 0.9rem; word-break: break-all; }
+    .field-value.error-text {
+      background: #fff5f5;
+      border-left: 3px solid #e53e3e;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.83rem;
+      white-space: pre-wrap;
+    }
+
+    label { font-size: 0.85rem; font-weight: 600; color: #444; display: block; margin-bottom: 6px; }
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 80px;
+      transition: border-color 0.2s;
+    }
+    textarea:focus { outline: none; border-color: #1e3a5f; }
+
+    .form-row { margin-bottom: 20px; }
+
+    .resolved-toggle { display: flex; align-items: center; gap: 12px; }
+    .toggle-label { font-size: 0.9rem; color: #444; }
+
+    /* toggle switch */
+    .switch { position: relative; display: inline-block; width: 48px; height: 26px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background: #ccc; border-radius: 26px; transition: 0.3s;
+    }
+    .slider:before {
+      position: absolute; content: "";
+      height: 20px; width: 20px; left: 3px; bottom: 3px;
+      background: white; border-radius: 50%; transition: 0.3s;
+    }
+    input:checked + .slider { background: #2d6a4f; }
+    input:checked + .slider:before { transform: translateX(22px); }
+
+    .btn-row { display: flex; gap: 12px; margin-top: 8px; }
+    .btn {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-primary { background: #1e3a5f; color: white; }
+    .btn-primary:hover { background: #2a4f7f; }
+    .btn-secondary { background: #e2e8f0; color: #333; }
+    .btn-secondary:hover { background: #cbd5e0; }
+
+    .flash-list { margin-bottom: 16px; }
+    .flash {
+      padding: 10px 16px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      font-size: 0.875rem;
+    }
+    .flash.success { background: #d4edda; color: #155724; }
+    .flash.error   { background: #f8d7da; color: #721c24; }
+
+    .resolved-info { font-size: 0.82rem; color: #666; margin-top: 6px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="{{ url_for('index') }}">← 목록</a>
+  <h1>오류 상세 / 조치 기록</h1>
+</header>
+
+<div class="container">
+
+  <div class="flash-list">
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+      <div class="flash {{ category }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+
+  <!-- 원본 정보 (읽기 전용) -->
+  <div class="card">
+    <h2>원본 오류 정보</h2>
+    <div class="field-grid">
+      <span class="field-label">File UUID</span>
+      <span class="field-value" style="font-family:monospace; font-size:0.83rem;">{{ row['file_uuid_id'] }}</span>
+
+      <span class="field-label">발생 시각</span>
+      <span class="field-value">{{ row['create_ts'] }}</span>
+
+      <span class="field-label">파일명</span>
+      <span class="field-value">{{ row['file_name'] }}</span>
+
+      <span class="field-label">테이블명</span>
+      <span class="field-value">{{ row['table_name'] }}</span>
+
+      <span class="field-label">오류 내용</span>
+      <span class="field-value error-text">{{ row['error'] }}</span>
+    </div>
+  </div>
+
+  <!-- 조치 기록 (수정 가능) -->
+  <div class="card">
+    <h2>조치 기록</h2>
+    <form method="POST">
+      <div class="form-row">
+        <label for="root_cause">원인 파악</label>
+        <textarea id="root_cause" name="root_cause" placeholder="오류 원인을 입력하세요">{{ row['root_cause'] or '' }}</textarea>
+      </div>
+
+      <div class="form-row">
+        <label for="action_required">조치 필요 내용</label>
+        <textarea id="action_required" name="action_required" placeholder="조치해야 할 내용을 입력하세요">{{ row['action_required'] or '' }}</textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="resolved-toggle">
+          <label class="switch">
+            <input type="checkbox" name="resolved" value="1" id="resolved-toggle"
+              {% if row['resolved'] %}checked{% endif %}>
+            <span class="slider"></span>
+          </label>
+          <span class="toggle-label" id="resolved-label">
+            {% if row['resolved'] %}조치 완료{% else %}미완료{% endif %}
+          </span>
+        </div>
+        {% if row['resolved'] and row['resolved_at'] %}
+          <div class="resolved-info">완료 처리 일시: {{ row['resolved_at'] }}</div>
+        {% endif %}
+      </div>
+
+      <div class="btn-row">
+        <button type="submit" class="btn btn-primary">저장</button>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">취소</a>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+<script>
+  const toggle = document.getElementById('resolved-toggle');
+  const label  = document.getElementById('resolved-label');
+  toggle.addEventListener('change', () => {
+    label.textContent = toggle.checked ? '조치 완료' : '미완료';
+  });
+</script>
+
+</body>
+</html>
