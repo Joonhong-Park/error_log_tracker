@@ -1,12 +1,21 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, send_file
 from datetime import datetime
 import io
+import os
+import sys
+import webbrowser
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 import db
 import pg_sync
 
-app = Flask(__name__)
+# PyInstaller 번들 실행 시 templates 경로 보정
+if getattr(sys, "frozen", False):
+    _base = sys._MEIPASS
+else:
+    _base = os.path.dirname(os.path.abspath(__file__))
+
+app = Flask(__name__, template_folder=os.path.join(_base, "templates"))
 app.secret_key = "error_logging_secret"
 
 db.init_db()
@@ -45,6 +54,22 @@ def detail(file_uuid_id):
         return redirect(url_for("index"))
 
     return render_template("detail.html", row=row)
+
+
+@app.route("/settings", methods=["GET", "POST"])
+def settings():
+    if request.method == "POST":
+        db.set_config({
+            "PG_HOST":     request.form.get("PG_HOST", "").strip(),
+            "PG_PORT":     request.form.get("PG_PORT", "5432").strip(),
+            "PG_DBNAME":   request.form.get("PG_DBNAME", "").strip(),
+            "PG_USER":     request.form.get("PG_USER", "").strip(),
+            "PG_PASSWORD": request.form.get("PG_PASSWORD", "").strip(),
+        })
+        flash("설정이 저장되었습니다.", "success")
+        return redirect(url_for("index"))
+    cfg = db.get_config()
+    return render_template("settings.html", cfg=cfg)
 
 
 @app.route("/export")
@@ -124,4 +149,5 @@ def export():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    webbrowser.open("http://localhost:5000")
+    app.run(debug=False, host="0.0.0.0", port=5000)

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DB 접속 설정 — Error Log Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; color: #333; }
+
+    header {
+      background: #1e3a5f;
+      color: white;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    header h1 { font-size: 1.2rem; font-weight: 600; }
+    header a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.85rem; }
+    header a:hover { color: white; }
+
+    .flash-list { padding: 0 32px; margin-top: 16px; }
+    .flash {
+      padding: 10px 16px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      font-size: 0.875rem;
+    }
+    .flash.success { background: #d4edda; color: #155724; }
+    .flash.error   { background: #f8d7da; color: #721c24; }
+
+    .card {
+      max-width: 480px;
+      margin: 32px auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+      padding: 32px;
+    }
+    .card h2 { font-size: 1rem; font-weight: 600; margin-bottom: 24px; color: #1e3a5f; }
+
+    .form-group { margin-bottom: 18px; }
+    label { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 6px; color: #555; }
+    input {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus { border-color: #1e3a5f; }
+
+    .btn {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-primary { background: #1e3a5f; color: white; }
+    .btn-primary:hover { background: #2a4f7f; }
+    .btn-secondary { background: #e2e8f0; color: #333; margin-left: 8px; }
+    .btn-secondary:hover { background: #cbd5e0; }
+
+    .hint { font-size: 0.78rem; color: #999; margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Error Log Tracker</h1>
+  <a href="{{ url_for('index') }}">← 목록으로</a>
+</header>
+
+<div class="flash-list">
+  {% for category, message in get_flashed_messages(with_categories=true) %}
+    <div class="flash {{ category }}">{{ message }}</div>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <h2>PostgreSQL 접속 설정</h2>
+  <form method="POST">
+    <div class="form-group">
+      <label>HOST</label>
+      <input type="text" name="PG_HOST" value="{{ cfg.get('PG_HOST', '') }}" placeholder="예) 192.168.1.100" required>
+    </div>
+    <div class="form-group">
+      <label>PORT</label>
+      <input type="text" name="PG_PORT" value="{{ cfg.get('PG_PORT', '5432') }}" placeholder="5432">
+    </div>
+    <div class="form-group">
+      <label>DATABASE</label>
+      <input type="text" name="PG_DBNAME" value="{{ cfg.get('PG_DBNAME', '') }}" placeholder="데이터베이스명" required>
+    </div>
+    <div class="form-group">
+      <label>USER</label>
+      <input type="text" name="PG_USER" value="{{ cfg.get('PG_USER', '') }}" placeholder="사용자명" required>
+    </div>
+    <div class="form-group">
+      <label>PASSWORD</label>
+      <input type="password" name="PG_PASSWORD" value="{{ cfg.get('PG_PASSWORD', '') }}" placeholder="비밀번호">
+      <div class="hint">설정값은 error_memo.db 안에 저장됩니다.</div>
+    </div>
+    <div style="margin-top: 24px;">
+      <button type="submit" class="btn btn-primary">저장</button>
+      <a href="{{ url_for('index') }}" class="btn btn-secondary">취소</a>
+    </div>
+  </form>
+</div>
+
+</body>
+</html>

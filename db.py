@@ -1,7 +1,11 @@
 import sqlite3
 import os
+import sys
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "error_memo.db")
+if getattr(sys, "frozen", False):
+    DB_PATH = os.path.join(os.path.dirname(sys.executable), "error_memo.db")
+else:
+    DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "error_memo.db")
 
 
 def get_conn():
@@ -25,6 +29,28 @@ def init_db():
                 resolved_at     TEXT
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS config (
+                key   TEXT PRIMARY KEY,
+                value TEXT
+            )
+        """)
+        conn.commit()
+
+
+def get_config():
+    with get_conn() as conn:
+        rows = conn.execute("SELECT key, value FROM config").fetchall()
+    return {r["key"]: r["value"] for r in rows}
+
+
+def set_config(data: dict):
+    with get_conn() as conn:
+        for key, value in data.items():
+            conn.execute(
+                "INSERT INTO config(key, value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                (key, value),
+            )
         conn.commit()
 
 
