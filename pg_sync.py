@@ -1,22 +1,20 @@
 import psycopg2
 import psycopg2.extras
 
+PG_HOST     = "your_host"
+PG_PORT     = "5432"
+PG_DBNAME   = "your_dbname"
+PG_USER     = "your_user"
+PG_PASSWORD = "your_password"
+
 
 def fetch_from_pg():
-    from db import get_config
-    cfg = get_config()
-
-    required = ["PG_HOST", "PG_PORT", "PG_DBNAME", "PG_USER", "PG_PASSWORD"]
-    missing = [k for k in required if not cfg.get(k)]
-    if missing:
-        raise RuntimeError(f"DB 접속 설정이 없습니다. 설정 화면에서 입력해 주세요. (미설정: {', '.join(missing)})")
-
     conn = psycopg2.connect(
-        host=cfg["PG_HOST"],
-        port=cfg["PG_PORT"],
-        dbname=cfg["PG_DBNAME"],
-        user=cfg["PG_USER"],
-        password=cfg["PG_PASSWORD"],
+        host=PG_HOST,
+        port=PG_PORT,
+        dbname=PG_DBNAME,
+        user=PG_USER,
+        password=PG_PASSWORD,
     )
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
@@ -24,7 +22,13 @@ def fetch_from_pg():
                 "SELECT file_uuid_id, create_ts, error, table_name, file_name FROM error_log"
             )
             rows = cur.fetchall()
-        return [dict(r) for r in rows]
+        result = []
+        for r in rows:
+            d = dict(r)
+            if d["create_ts"] is not None:
+                d["create_ts"] = str(d["create_ts"])[:19]  # YYYY-MM-DD HH:MM:SS
+            result.append(d)
+        return result
     finally:
         conn.close()
 

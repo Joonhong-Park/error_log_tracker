@@ -138,7 +138,7 @@
       <span class="field-value" style="font-family:monospace; font-size:0.83rem;">{{ row['file_uuid_id'] }}</span>
 
       <span class="field-label">발생 시각</span>
-      <span class="field-value">{{ row['create_ts'] }}</span>
+      <span class="field-value">{{ row['create_time_ts'] }}</span>
 
       <span class="field-label">파일명</span>
       <span class="field-value">{{ row['file_name'] }}</span>
@@ -176,8 +176,8 @@
             {% if row['resolved'] %}조치 완료{% else %}미완료{% endif %}
           </span>
         </div>
-        {% if row['resolved'] and row['resolved_at'] %}
-          <div class="resolved-info">완료 처리 일시: {{ row['resolved_at'] }}</div>
+        {% if row['resolved'] and row['resolved_time_ts'] %}
+          <div class="resolved-info">완료 처리 일시: {{ row['resolved_time_ts'] }}</div>
         {% endif %}
       </div>
 

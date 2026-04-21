@@ -56,22 +56,6 @@ def detail(file_uuid_id):
     return render_template("detail.html", row=row)
 
 
-@app.route("/settings", methods=["GET", "POST"])
-def settings():
-    if request.method == "POST":
-        db.set_config({
-            "PG_HOST":     request.form.get("PG_HOST", "").strip(),
-            "PG_PORT":     request.form.get("PG_PORT", "5432").strip(),
-            "PG_DBNAME":   request.form.get("PG_DBNAME", "").strip(),
-            "PG_USER":     request.form.get("PG_USER", "").strip(),
-            "PG_PASSWORD": request.form.get("PG_PASSWORD", "").strip(),
-        })
-        flash("설정이 저장되었습니다.", "success")
-        return redirect(url_for("index"))
-    cfg = db.get_config()
-    return render_template("settings.html", cfg=cfg)
-
-
 @app.route("/export")
 def export():
     show_resolved = request.args.get("show_resolved", "0") == "1"
