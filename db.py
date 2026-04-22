@@ -60,8 +60,17 @@ def upsert_from_pg(records):
     return added
 
 
+_SORT_COLUMNS = {"create_time_ts", "file_name", "table_name", "table_type", "resolved"}
+
+
 def get_list(show_resolved: bool = False, date_from: str = None, date_to: str = None,
+             table_name: str = None, table_type: str = None, error_search: str = None,
+             sort_by: str = "create_time_ts", sort_dir: str = "desc",
              page: int = 1, per_page: int = 50):
+    if sort_by not in _SORT_COLUMNS:
+        sort_by = "create_time_ts"
+    sort_dir = "ASC" if sort_dir.lower() == "asc" else "DESC"
+
     conditions, params = [], []
     if not show_resolved:
         conditions.append("resolved = 0")
@@ -71,22 +80,43 @@ def get_list(show_resolved: bool = False, date_from: str = None, date_to: str = 
     if date_to:
         conditions.append("create_time_ts <= ?")
         params.append(date_to + " 23:59:59")
+    if table_name:
+        conditions.append("table_name = ?")
+        params.append(table_name)
+    if table_type:
+        conditions.append("table_type = ?")
+        params.append(table_type)
+    if error_search:
+        conditions.append("error LIKE ?")
+        params.append(f"%{error_search}%")
 
     where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+    order = f"ORDER BY {sort_by} {sort_dir}"
 
     with get_conn() as conn:
         total = conn.execute(f"SELECT COUNT(*) FROM error_memo {where}", params).fetchone()[0]
         if per_page is None:
             rows = conn.execute(
-                f"SELECT * FROM error_memo {where} ORDER BY create_time_ts DESC", params
+                f"SELECT * FROM error_memo {where} {order}", params
             ).fetchall()
         else:
             offset = (page - 1) * per_page
             rows = conn.execute(
-                f"SELECT * FROM error_memo {where} ORDER BY create_time_ts DESC LIMIT ? OFFSET ?",
+                f"SELECT * FROM error_memo {where} {order} LIMIT ? OFFSET ?",
                 params + [per_page, offset],
             ).fetchall()
     return rows, total
+
+
+def get_filter_options():
+    with get_conn() as conn:
+        table_names = [r[0] for r in conn.execute(
+            "SELECT DISTINCT table_name FROM error_memo WHERE table_name IS NOT NULL ORDER BY table_name"
+        ).fetchall()]
+        table_types = [r[0] for r in conn.execute(
+            "SELECT DISTINCT table_type FROM error_memo WHERE table_type IS NOT NULL ORDER BY table_type"
+        ).fetchall()]
+    return table_names, table_types
 
 
 def get_one(file_uuid_id: str):

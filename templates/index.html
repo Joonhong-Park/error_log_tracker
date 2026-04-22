@@ -27,21 +27,29 @@
     }
 
     .filter-bar {
-      padding: 12px 32px 16px;
+      padding: 10px 32px 16px;
       display: flex;
-      gap: 10px;
+      gap: 8px;
       align-items: center;
       flex-wrap: wrap;
     }
-    .filter-bar label { font-size: 0.83rem; color: #555; font-weight: 600; }
-    .filter-bar input[type="date"] {
+    .filter-group { display: flex; align-items: center; gap: 6px; }
+    .filter-label { font-size: 0.8rem; color: #555; font-weight: 600; white-space: nowrap; }
+    .filter-bar input[type="date"],
+    .filter-bar input[type="text"],
+    .filter-bar select {
       padding: 6px 10px;
       border: 1px solid #d1d5db;
       border-radius: 6px;
-      font-size: 0.85rem;
+      font-size: 0.83rem;
       outline: none;
+      background: white;
     }
-    .filter-bar input[type="date"]:focus { border-color: #1e3a5f; }
+    .filter-bar input[type="date"]:focus,
+    .filter-bar input[type="text"]:focus,
+    .filter-bar select:focus { border-color: #1e3a5f; }
+    .filter-bar input[type="text"] { width: 180px; }
+    .filter-divider { width: 1px; height: 24px; background: #d1d5db; margin: 0 4px; }
 
     .btn {
       padding: 8px 18px;
@@ -61,12 +69,7 @@
     .btn-sm { padding: 5px 12px; font-size: 0.8rem; }
 
     .flash-list { padding: 0 32px; margin-top: 12px; }
-    .flash {
-      padding: 10px 16px;
-      border-radius: 6px;
-      margin-bottom: 8px;
-      font-size: 0.875rem;
-    }
+    .flash { padding: 10px 16px; border-radius: 6px; margin-bottom: 8px; font-size: 0.875rem; }
     .flash.success { background: #d4edda; color: #155724; }
     .flash.error   { background: #f8d7da; color: #721c24; }
 
@@ -75,26 +78,23 @@
     thead { background: #1e3a5f; color: white; }
     th, td { padding: 11px 14px; text-align: left; font-size: 0.85rem; }
     th { font-weight: 600; white-space: nowrap; }
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable:hover { background: #2a4f7f; }
+    th .sort-icon { margin-left: 4px; opacity: 0.5; font-size: 0.75rem; }
+    th.sort-active .sort-icon { opacity: 1; }
     tbody tr { border-bottom: 1px solid #e8ecf0; }
     tbody tr:last-child { border-bottom: none; }
     tbody tr:hover { background: #f0f4f8; cursor: pointer; }
 
-    .badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 12px;
-      font-size: 0.78rem;
-      font-weight: 600;
-    }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; }
     .badge-pending  { background: #fff3cd; color: #856404; }
     .badge-resolved { background: #d4edda; color: #155724; }
 
     .text-muted { color: #888; font-style: italic; font-size: 0.82rem; }
-    .truncate { max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .truncate { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     .empty { text-align: center; padding: 48px; color: #aaa; font-size: 0.95rem; }
 
-    /* 페이지네이션 */
     .pagination {
       display: flex;
       justify-content: center;
@@ -110,7 +110,6 @@
       color: #333;
       font-size: 0.83rem;
       text-decoration: none;
-      cursor: pointer;
     }
     .page-btn:hover { background: #e2e8f0; }
     .page-btn.active { background: #1e3a5f; color: white; border-color: #1e3a5f; font-weight: 600; }
@@ -131,32 +130,68 @@
   {% endfor %}
 </div>
 
+{% set base_args = {
+  'show_resolved': '1' if show_resolved else '0',
+  'date_from': date_from, 'date_to': date_to,
+  'table_name': table_name, 'table_type': table_type,
+  'error_search': error_search,
+  'sort_by': sort_by, 'sort_dir': sort_dir
+} %}
+
 <div class="toolbar">
   <a href="{{ url_for('sync') }}" class="btn btn-primary">동기화</a>
 
   {% if show_resolved %}
-    <a href="{{ url_for('index', date_from=date_from, date_to=date_to) }}" class="btn btn-secondary">미완료만 보기</a>
-    <a href="{{ url_for('export', show_resolved=1, date_from=date_from, date_to=date_to) }}" class="btn btn-success">Excel 추출</a>
+    <a href="{{ url_for('index', **base_args | replace('show_resolved', '0')) }}" class="btn btn-secondary">미완료만 보기</a>
   {% else %}
-    <a href="{{ url_for('index', show_resolved=1, date_from=date_from, date_to=date_to) }}" class="btn btn-secondary">완료 건 포함 보기</a>
-    <a href="{{ url_for('export', date_from=date_from, date_to=date_to) }}" class="btn btn-success">Excel 추출</a>
+    <a href="{{ url_for('index', **base_args | replace('show_resolved', '1')) }}" class="btn btn-secondary">완료 건 포함 보기</a>
   {% endif %}
+
+  <a href="{{ url_for('export', **base_args) }}" class="btn btn-success">Excel 추출</a>
 
   <span style="margin-left:auto; font-size:0.85rem; color:#666;">
     전체 <strong>{{ total }}</strong>건 &nbsp;/&nbsp; {{ page }}/{{ total_pages }} 페이지
   </span>
 </div>
 
-<!-- 날짜 필터 -->
+<!-- 필터 -->
 <form method="GET" action="{{ url_for('index') }}">
   <input type="hidden" name="show_resolved" value="{{ '1' if show_resolved else '0' }}">
+  <input type="hidden" name="sort_by"       value="{{ sort_by }}">
+  <input type="hidden" name="sort_dir"      value="{{ sort_dir }}">
   <div class="filter-bar">
-    <label>기간</label>
-    <input type="date" name="date_from" value="{{ date_from }}">
-    <span style="color:#888;">~</span>
-    <input type="date" name="date_to" value="{{ date_to }}">
+    <div class="filter-group">
+      <span class="filter-label">기간</span>
+      <input type="date" name="date_from" value="{{ date_from }}">
+      <span style="color:#888; font-size:0.85rem;">~</span>
+      <input type="date" name="date_to"   value="{{ date_to }}">
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <span class="filter-label">테이블명</span>
+      <select name="table_name">
+        <option value="">전체</option>
+        {% for tn in table_names %}
+          <option value="{{ tn }}" {% if tn == table_name %}selected{% endif %}>{{ tn }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">타입</span>
+      <select name="table_type">
+        <option value="">전체</option>
+        {% for tt in table_types %}
+          <option value="{{ tt }}" {% if tt == table_type %}selected{% endif %}>{{ tt }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-group">
+      <span class="filter-label">오류 검색</span>
+      <input type="text" name="error_search" value="{{ error_search }}" placeholder="오류 내용 키워드">
+    </div>
     <button type="submit" class="btn btn-primary btn-sm">조회</button>
-    {% if date_from or date_to %}
+    {% if date_from or date_to or table_name or table_type or error_search %}
       <a href="{{ url_for('index', show_resolved='1' if show_resolved else '0') }}" class="btn btn-secondary btn-sm">초기화</a>
     {% endif %}
   </div>
@@ -166,16 +201,27 @@
   {% if rows %}
   <table>
     <thead>
+      {% macro sort_link(col, label) %}
+        {% set next_dir = 'asc' if (sort_by == col and sort_dir == 'desc') else 'desc' %}
+        {% set icon = '▲' if (sort_by == col and sort_dir == 'asc') else '▼' %}
+        <th class="sortable {% if sort_by == col %}sort-active{% endif %}"
+            onclick="location.href='{{ url_for('index', sort_by=col, sort_dir=next_dir,
+              show_resolved='1' if show_resolved else '0',
+              date_from=date_from, date_to=date_to,
+              table_name=table_name, table_type=table_type, error_search=error_search, page=1) }}'">
+          {{ label }}<span class="sort-icon">{{ icon }}</span>
+        </th>
+      {% endmacro %}
       <tr>
-        <th>발생 시각</th>
+        {{ sort_link('create_time_ts', '발생 시각') }}
         <th>ID</th>
-        <th>파일명</th>
+        {{ sort_link('file_name', '파일명') }}
         <th>오류 내용</th>
-        <th>테이블명</th>
-        <th>타입</th>
+        {{ sort_link('table_name', '테이블명') }}
+        {{ sort_link('table_type', '타입') }}
         <th>원인 파악</th>
         <th>조치 필요 내용</th>
-        <th>조치 여부</th>
+        {{ sort_link('resolved', '조치 여부') }}
       </tr>
     </thead>
     <tbody>
@@ -207,33 +253,37 @@
     </tbody>
   </table>
   {% else %}
-    <div class="empty">표시할 오류 건이 없습니다.</div>
+    <div class="empty">조건에 맞는 오류 건이 없습니다.</div>
   {% endif %}
 </div>
 
-<!-- 페이지네이션 -->
 {% if total_pages > 1 %}
 <div class="pagination">
-  {% set args = {'show_resolved': '1' if show_resolved else '0', 'date_from': date_from, 'date_to': date_to} %}
-
+  {% set pargs = {
+    'show_resolved': '1' if show_resolved else '0',
+    'date_from': date_from, 'date_to': date_to,
+    'table_name': table_name, 'table_type': table_type,
+    'error_search': error_search,
+    'sort_by': sort_by, 'sort_dir': sort_dir
+  } %}
   <a class="page-btn {% if page == 1 %}disabled{% endif %}"
-     href="{{ url_for('index', page=1, **args) }}">«</a>
+     href="{{ url_for('index', page=1, **pargs) }}">«</a>
   <a class="page-btn {% if page == 1 %}disabled{% endif %}"
-     href="{{ url_for('index', page=page-1, **args) }}">‹</a>
+     href="{{ url_for('index', page=page-1, **pargs) }}">‹</a>
 
   {% set start = [page - 2, 1] | max %}
   {% set end   = [page + 2, total_pages] | min %}
   {% if start > 1 %}<span class="page-info">…</span>{% endif %}
   {% for p in range(start, end + 1) %}
     <a class="page-btn {% if p == page %}active{% endif %}"
-       href="{{ url_for('index', page=p, **args) }}">{{ p }}</a>
+       href="{{ url_for('index', page=p, **pargs) }}">{{ p }}</a>
   {% endfor %}
   {% if end < total_pages %}<span class="page-info">…</span>{% endif %}
 
   <a class="page-btn {% if page == total_pages %}disabled{% endif %}"
-     href="{{ url_for('index', page=page+1, **args) }}">›</a>
+     href="{{ url_for('index', page=page+1, **pargs) }}">›</a>
   <a class="page-btn {% if page == total_pages %}disabled{% endif %}"
-     href="{{ url_for('index', page=total_pages, **args) }}">»</a>
+     href="{{ url_for('index', page=total_pages, **pargs) }}">»</a>
 </div>
 {% endif %}
 
