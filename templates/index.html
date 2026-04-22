@@ -73,7 +73,7 @@
     .flash.success { background: #d4edda; color: #155724; }
     .flash.error   { background: #f8d7da; color: #721c24; }
 
-    .table-wrap { padding: 0 32px; overflow-x: auto; }
+    .table-wrap { padding: 0 16px; }
     table { width: max-content; min-width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
     thead { background: #1e3a5f; color: white; }
     th, td { padding: 7px 10px; text-align: left; font-size: 0.85rem; white-space: nowrap; }
@@ -275,16 +275,15 @@
 {% endif %}
 
 <script>
-  const wrap = document.getElementById('table-wrap');
-  // 페이지 로드 시 저장된 스크롤 위치 복원
-  const saved = sessionStorage.getItem('tableScrollLeft');
-  if (wrap && saved !== null) {
-    wrap.scrollLeft = parseInt(saved, 10);
-    sessionStorage.removeItem('tableScrollLeft');
+  // 페이지 로드 시 저장된 가로 스크롤 위치 복원
+  const savedX = sessionStorage.getItem('pageScrollLeft');
+  if (savedX !== null) {
+    window.scrollTo(parseInt(savedX, 10), window.scrollY);
+    sessionStorage.removeItem('pageScrollLeft');
   }
-  // 페이지 이탈 전 스크롤 위치 저장 (페이징·정렬 클릭 포함)
+  // 페이지 이탈 전 가로 스크롤 위치 저장 (페이징·정렬 클릭 포함)
   window.addEventListener('beforeunload', () => {
-    if (wrap) sessionStorage.setItem('tableScrollLeft', wrap.scrollLeft);
+    sessionStorage.setItem('pageScrollLeft', window.scrollX);
   });
 </script>
 </body>
