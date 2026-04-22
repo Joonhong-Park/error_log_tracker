@@ -30,23 +30,6 @@ def init_db():
                 resolved_date_ts TEXT
             )
         """)
-        # 구버전 컬럼명 마이그레이션
-        cols = {r[1] for r in conn.execute("PRAGMA table_info(error_memo)")}
-        renames = [
-            ("create_ts",       "create_date_ts"),
-            ("resolved_at",     "resolved_date_ts"),
-            ("create_time_ts",  "create_date_ts"),
-            ("resolved_time_ts","resolved_date_ts"),
-            ("file_uuid_id",    "message_id"),
-            ("file_name",       "origin_file_name"),
-        ]
-        for old, new in renames:
-            if old in cols:
-                conn.execute(f"ALTER TABLE error_memo RENAME COLUMN {old} TO {new}")
-                cols.discard(old)
-                cols.add(new)
-        if "table_type" not in cols:
-            conn.execute("ALTER TABLE error_memo ADD COLUMN table_type TEXT")
         conn.commit()
 
 
