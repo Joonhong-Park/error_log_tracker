@@ -60,13 +60,33 @@ def upsert_from_pg(records):
     return added
 
 
-def get_list(show_resolved: bool = False):
-    sql = "SELECT * FROM error_memo"
+def get_list(show_resolved: bool = False, date_from: str = None, date_to: str = None,
+             page: int = 1, per_page: int = 50):
+    conditions, params = [], []
     if not show_resolved:
-        sql += " WHERE resolved = 0"
-    sql += " ORDER BY create_time_ts DESC"
+        conditions.append("resolved = 0")
+    if date_from:
+        conditions.append("create_time_ts >= ?")
+        params.append(date_from + " 00:00:00")
+    if date_to:
+        conditions.append("create_time_ts <= ?")
+        params.append(date_to + " 23:59:59")
+
+    where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+
     with get_conn() as conn:
-        return conn.execute(sql).fetchall()
+        total = conn.execute(f"SELECT COUNT(*) FROM error_memo {where}", params).fetchone()[0]
+        if per_page is None:
+            rows = conn.execute(
+                f"SELECT * FROM error_memo {where} ORDER BY create_time_ts DESC", params
+            ).fetchall()
+        else:
+            offset = (page - 1) * per_page
+            rows = conn.execute(
+                f"SELECT * FROM error_memo {where} ORDER BY create_time_ts DESC LIMIT ? OFFSET ?",
+                params + [per_page, offset],
+            ).fetchall()
+    return rows, total
 
 
 def get_one(file_uuid_id: str):

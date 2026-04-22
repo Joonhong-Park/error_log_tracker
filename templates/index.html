@@ -19,11 +19,29 @@
     header h1 { font-size: 1.2rem; font-weight: 600; }
 
     .toolbar {
-      padding: 16px 32px;
+      padding: 16px 32px 0;
       display: flex;
       gap: 12px;
       align-items: center;
+      flex-wrap: wrap;
     }
+
+    .filter-bar {
+      padding: 12px 32px 16px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .filter-bar label { font-size: 0.83rem; color: #555; font-weight: 600; }
+    .filter-bar input[type="date"] {
+      padding: 6px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      outline: none;
+    }
+    .filter-bar input[type="date"]:focus { border-color: #1e3a5f; }
 
     .btn {
       padding: 8px 18px;
@@ -34,14 +52,15 @@
       text-decoration: none;
       display: inline-block;
     }
-    .btn-primary { background: #1e3a5f; color: white; }
-    .btn-primary:hover { background: #2a4f7f; }
+    .btn-primary  { background: #1e3a5f; color: white; }
+    .btn-primary:hover  { background: #2a4f7f; }
     .btn-secondary { background: #e2e8f0; color: #333; }
     .btn-secondary:hover { background: #cbd5e0; }
-    .btn-success { background: #2d6a4f; color: white; }
-    .btn-success:hover { background: #3a7d5f; }
+    .btn-success  { background: #2d6a4f; color: white; }
+    .btn-success:hover  { background: #3a7d5f; }
+    .btn-sm { padding: 5px 12px; font-size: 0.8rem; }
 
-    .flash-list { padding: 0 32px; }
+    .flash-list { padding: 0 32px; margin-top: 12px; }
     .flash {
       padding: 10px 16px;
       border-radius: 6px;
@@ -51,7 +70,7 @@
     .flash.success { background: #d4edda; color: #155724; }
     .flash.error   { background: #f8d7da; color: #721c24; }
 
-    .table-wrap { padding: 0 32px 32px; overflow-x: auto; }
+    .table-wrap { padding: 0 32px; overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
     thead { background: #1e3a5f; color: white; }
     th, td { padding: 11px 14px; text-align: left; font-size: 0.85rem; }
@@ -71,9 +90,32 @@
     .badge-resolved { background: #d4edda; color: #155724; }
 
     .text-muted { color: #888; font-style: italic; font-size: 0.82rem; }
-    .truncate { max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .truncate { max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     .empty { text-align: center; padding: 48px; color: #aaa; font-size: 0.95rem; }
+
+    /* 페이지네이션 */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      padding: 20px 32px 32px;
+    }
+    .page-btn {
+      padding: 6px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background: white;
+      color: #333;
+      font-size: 0.83rem;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .page-btn:hover { background: #e2e8f0; }
+    .page-btn.active { background: #1e3a5f; color: white; border-color: #1e3a5f; font-weight: 600; }
+    .page-btn.disabled { color: #bbb; pointer-events: none; }
+    .page-info { font-size: 0.83rem; color: #666; margin: 0 8px; }
   </style>
 </head>
 <body>
@@ -93,17 +135,32 @@
   <a href="{{ url_for('sync') }}" class="btn btn-primary">동기화</a>
 
   {% if show_resolved %}
-    <a href="{{ url_for('index') }}" class="btn btn-secondary">미완료만 보기</a>
-    <a href="{{ url_for('export', show_resolved=1) }}" class="btn btn-success">Excel 추출 (전체)</a>
+    <a href="{{ url_for('index', date_from=date_from, date_to=date_to) }}" class="btn btn-secondary">미완료만 보기</a>
+    <a href="{{ url_for('export', show_resolved=1, date_from=date_from, date_to=date_to) }}" class="btn btn-success">Excel 추출</a>
   {% else %}
-    <a href="{{ url_for('index', show_resolved=1) }}" class="btn btn-secondary">완료 건 포함 보기</a>
-    <a href="{{ url_for('export') }}" class="btn btn-success">Excel 추출 (미완료)</a>
+    <a href="{{ url_for('index', show_resolved=1, date_from=date_from, date_to=date_to) }}" class="btn btn-secondary">완료 건 포함 보기</a>
+    <a href="{{ url_for('export', date_from=date_from, date_to=date_to) }}" class="btn btn-success">Excel 추출</a>
   {% endif %}
 
   <span style="margin-left:auto; font-size:0.85rem; color:#666;">
-    {{ rows|length }}건
+    전체 <strong>{{ total }}</strong>건 &nbsp;/&nbsp; {{ page }}/{{ total_pages }} 페이지
   </span>
 </div>
+
+<!-- 날짜 필터 -->
+<form method="GET" action="{{ url_for('index') }}">
+  <input type="hidden" name="show_resolved" value="{{ '1' if show_resolved else '0' }}">
+  <div class="filter-bar">
+    <label>기간</label>
+    <input type="date" name="date_from" value="{{ date_from }}">
+    <span style="color:#888;">~</span>
+    <input type="date" name="date_to" value="{{ date_to }}">
+    <button type="submit" class="btn btn-primary btn-sm">조회</button>
+    {% if date_from or date_to %}
+      <a href="{{ url_for('index', show_resolved='1' if show_resolved else '0') }}" class="btn btn-secondary btn-sm">초기화</a>
+    {% endif %}
+  </div>
+</form>
 
 <div class="table-wrap">
   {% if rows %}
@@ -153,6 +210,32 @@
     <div class="empty">표시할 오류 건이 없습니다.</div>
   {% endif %}
 </div>
+
+<!-- 페이지네이션 -->
+{% if total_pages > 1 %}
+<div class="pagination">
+  {% set args = {'show_resolved': '1' if show_resolved else '0', 'date_from': date_from, 'date_to': date_to} %}
+
+  <a class="page-btn {% if page == 1 %}disabled{% endif %}"
+     href="{{ url_for('index', page=1, **args) }}">«</a>
+  <a class="page-btn {% if page == 1 %}disabled{% endif %}"
+     href="{{ url_for('index', page=page-1, **args) }}">‹</a>
+
+  {% set start = [page - 2, 1] | max %}
+  {% set end   = [page + 2, total_pages] | min %}
+  {% if start > 1 %}<span class="page-info">…</span>{% endif %}
+  {% for p in range(start, end + 1) %}
+    <a class="page-btn {% if p == page %}active{% endif %}"
+       href="{{ url_for('index', page=p, **args) }}">{{ p }}</a>
+  {% endfor %}
+  {% if end < total_pages %}<span class="page-info">…</span>{% endif %}
+
+  <a class="page-btn {% if page == total_pages %}disabled{% endif %}"
+     href="{{ url_for('index', page=page+1, **args) }}">›</a>
+  <a class="page-btn {% if page == total_pages %}disabled{% endif %}"
+     href="{{ url_for('index', page=total_pages, **args) }}">»</a>
+</div>
+{% endif %}
 
 </body>
 </html>

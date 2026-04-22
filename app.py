@@ -24,8 +24,31 @@ db.init_db()
 @app.route("/")
 def index():
     show_resolved = request.args.get("show_resolved", "0") == "1"
-    rows = db.get_list(show_resolved=show_resolved)
-    return render_template("index.html", rows=rows, show_resolved=show_resolved)
+    date_from     = request.args.get("date_from", "")
+    date_to       = request.args.get("date_to", "")
+    page          = max(1, int(request.args.get("page", 1)))
+    per_page      = 50
+
+    rows, total = db.get_list(
+        show_resolved=show_resolved,
+        date_from=date_from or None,
+        date_to=date_to or None,
+        page=page,
+        per_page=per_page,
+    )
+    total_pages = max(1, (total + per_page - 1) // per_page)
+
+    return render_template(
+        "index.html",
+        rows=rows,
+        show_resolved=show_resolved,
+        date_from=date_from,
+        date_to=date_to,
+        page=page,
+        total=total,
+        total_pages=total_pages,
+        per_page=per_page,
+    )
 
 
 @app.route("/sync")
@@ -59,7 +82,9 @@ def detail(file_uuid_id):
 @app.route("/export")
 def export():
     show_resolved = request.args.get("show_resolved", "0") == "1"
-    rows = db.get_list(show_resolved=show_resolved)
+    date_from     = request.args.get("date_from", "") or None
+    date_to       = request.args.get("date_to", "") or None
+    rows, _       = db.get_list(show_resolved=show_resolved, date_from=date_from, date_to=date_to, per_page=None)
 
     wb = openpyxl.Workbook()
     ws = wb.active
