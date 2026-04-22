@@ -29,7 +29,7 @@ def index():
     table_name    = request.args.get("table_name", "")
     table_type    = request.args.get("table_type", "")
     error_search  = request.args.get("error_search", "")
-    sort_by       = request.args.get("sort_by", "create_time_ts")
+    sort_by       = request.args.get("sort_by", "create_date_ts")
     sort_dir      = request.args.get("sort_dir", "desc")
     page          = max(1, int(request.args.get("page", 1)))
     per_page      = 50
@@ -104,7 +104,7 @@ def export():
     table_name    = request.args.get("table_name", "") or None
     table_type    = request.args.get("table_type", "") or None
     error_search  = request.args.get("error_search", "") or None
-    sort_by       = request.args.get("sort_by", "create_time_ts")
+    sort_by       = request.args.get("sort_by", "create_date_ts")
     sort_dir      = request.args.get("sort_dir", "desc")
     rows, _       = db.get_list(
         show_resolved=show_resolved, date_from=date_from, date_to=date_to,
@@ -146,14 +146,14 @@ def export():
     for row_idx, r in enumerate(rows, start=2):
         resolved_text = "완료" if r["resolved"] else "미완료"
         values = [
-            r["create_ts"],
-            r["file_name"],
+            r["create_date_ts"],
+            r["origin_file_name"],
             r["table_name"],
             r["error"],
             r["root_cause"] or "",
             r["action_required"] or "",
             resolved_text,
-            r["resolved_at"] or "",
+            r["resolved_date_ts"] or "",
         ]
         row_fill = resolved_fill if r["resolved"] else unresolved_fill
 
