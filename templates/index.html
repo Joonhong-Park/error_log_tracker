@@ -208,9 +208,9 @@
         </th>
       {% endmacro %}
       <tr>
-        {{ sort_link('create_time_ts', '발생 시각') }}
+        {{ sort_link('create_date_ts', '발생 시각') }}
         <th>ID</th>
-        {{ sort_link('file_name', '파일명') }}
+        {{ sort_link('origin_file_name', '파일명') }}
         <th>오류 내용</th>
         {{ sort_link('table_name', '테이블명') }}
         {{ sort_link('table_type', '타입') }}
@@ -221,10 +221,10 @@
     </thead>
     <tbody>
       {% for r in rows %}
-      <tr onclick="location.href='{{ url_for('detail', file_uuid_id=r['file_uuid_id']) }}'">
-        <td style="white-space:nowrap;">{{ r['create_time_ts'] }}</td>
-        <td class="truncate" style="font-family:monospace; font-size:0.78rem;">{{ r['file_uuid_id'] }}</td>
-        <td class="truncate">{{ r['file_name'] }}</td>
+      <tr onclick="location.href='{{ url_for('detail', message_id=r['message_id']) }}'">
+        <td style="white-space:nowrap;">{{ r['create_date_ts'] }}</td>
+        <td class="truncate" style="font-family:monospace; font-size:0.78rem;">{{ r['message_id'] }}</td>
+        <td class="truncate">{{ r['origin_file_name'] }}</td>
         <td class="truncate">{{ r['error'] }}</td>
         <td>{{ r['table_name'] }}</td>
         <td>{{ r['table_type'] or '' }}</td>

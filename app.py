@@ -78,9 +78,9 @@ def sync():
     return redirect(url_for("index"))
 
 
-@app.route("/error/<file_uuid_id>", methods=["GET", "POST"])
-def detail(file_uuid_id):
-    row = db.get_one(file_uuid_id)
+@app.route("/error/<message_id>", methods=["GET", "POST"])
+def detail(message_id):
+    row = db.get_one(message_id)
     if row is None:
         flash("해당 오류 건을 찾을 수 없습니다.", "error")
         return redirect(url_for("index"))
@@ -89,7 +89,7 @@ def detail(file_uuid_id):
         root_cause = request.form.get("root_cause", "").strip()
         action_required = request.form.get("action_required", "").strip()
         resolved = request.form.get("resolved") == "1"
-        db.update_memo(file_uuid_id, root_cause, action_required, resolved)
+        db.update_memo(message_id, root_cause, action_required, resolved)
         flash("저장되었습니다.", "success")
         return redirect(url_for("index"))
 

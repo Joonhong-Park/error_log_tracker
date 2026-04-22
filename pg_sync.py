@@ -19,14 +19,14 @@ def fetch_from_pg():
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
-                "SELECT file_uuid_id, create_ts, error, table_name, table_type, file_name FROM error_log"
+                "SELECT message_id, create_date_ts, error, table_name, table_type, origin_file_name FROM error_log"
             )
             rows = cur.fetchall()
         result = []
         for r in rows:
             d = dict(r)
-            if d["create_ts"] is not None:
-                d["create_ts"] = str(d["create_ts"])[:19]  # YYYY-MM-DD HH:MM:SS
+            if d["create_date_ts"] is not None:
+                d["create_date_ts"] = str(d["create_date_ts"])[:19]  # YYYY-MM-DD HH:MM:SS
             result.append(d)
         return result
     finally:
