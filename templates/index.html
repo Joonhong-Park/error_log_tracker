@@ -305,40 +305,46 @@
 
   // ── 컬럼 너비 초기화 및 resize handle 삽입 ──
   if (table) {
-    const ths = table.querySelectorAll('thead th');
+    const ths = Array.from(table.querySelectorAll('thead th'));
+    // 오류 내용 열(index 4) 기본 너비 상한
+    const ERROR_COL_IDX = 4;
+    const ERROR_COL_DEFAULT = 300;
 
-    // 현재 렌더링된 너비를 고정 (table-layout: fixed 전환 준비)
-    ths.forEach(th => { th.style.width = th.offsetWidth + 'px'; });
-    table.style.width = table.offsetWidth + 'px';
+    // 렌더링된 너비를 배열로 수집 후 error 열 상한 적용
+    const colWidths = ths.map(th => th.offsetWidth);
+    if (colWidths[ERROR_COL_IDX] > ERROR_COL_DEFAULT) {
+      colWidths[ERROR_COL_IDX] = ERROR_COL_DEFAULT;
+    }
+
+    // 배열 기준으로 각 th와 테이블 너비 고정
+    function applyWidths() {
+      ths.forEach((th, i) => { th.style.width = colWidths[i] + 'px'; });
+      table.style.width = colWidths.reduce((s, w) => s + w, 0) + 'px';
+    }
+    applyWidths();
 
     // resize handle 추가
-    ths.forEach(th => {
+    let dragging = false, targetIdx = -1, startX = 0, startW = 0;
+
+    ths.forEach((th, i) => {
       const handle = document.createElement('div');
       handle.className = 'resize-handle';
-      handle.addEventListener('mousedown', onResizeStart);
+      handle.addEventListener('mousedown', e => {
+        e.stopPropagation();
+        dragging = true;
+        targetIdx = i;
+        startX = e.clientX;
+        startW = colWidths[i];
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+      });
       th.appendChild(handle);
     });
 
-    let dragging = false, targetTh = null, startX = 0, startW = 0;
-
-    function onResizeStart(e) {
-      e.stopPropagation();
-      dragging = true;
-      targetTh = e.currentTarget.parentElement;
-      startX = e.clientX;
-      startW = targetTh.offsetWidth;
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-    }
-
     document.addEventListener('mousemove', e => {
       if (!dragging) return;
-      const w = Math.max(40, startW + e.clientX - startX);
-      targetTh.style.width = w + 'px';
-      // 테이블 전체 너비 재계산
-      let total = 0;
-      table.querySelectorAll('thead th').forEach(th => { total += th.offsetWidth; });
-      table.style.width = total + 'px';
+      colWidths[targetIdx] = Math.max(40, startW + e.clientX - startX);
+      applyWidths();
     });
 
     document.addEventListener('mouseup', () => {
