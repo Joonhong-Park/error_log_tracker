@@ -11,7 +11,7 @@
     header {
       background: #1e3a5f;
       color: white;
-      padding: 16px 32px;
+      padding: 10px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -19,17 +19,17 @@
     header h1 { font-size: 1.2rem; font-weight: 600; }
 
     .toolbar {
-      padding: 16px 32px 0;
+      padding: 8px 16px 0;
       display: flex;
-      gap: 12px;
+      gap: 8px;
       align-items: center;
       flex-wrap: wrap;
     }
 
     .filter-bar {
-      padding: 10px 32px 16px;
+      padding: 6px 16px 10px;
       display: flex;
-      gap: 8px;
+      gap: 6px;
       align-items: center;
       flex-wrap: wrap;
     }
@@ -74,10 +74,10 @@
     .flash.error   { background: #f8d7da; color: #721c24; }
 
     .table-wrap { padding: 0 32px; overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    table { width: max-content; min-width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
     thead { background: #1e3a5f; color: white; }
-    th, td { padding: 11px 14px; text-align: left; font-size: 0.85rem; }
-    th { font-weight: 600; white-space: nowrap; }
+    th, td { padding: 7px 10px; text-align: left; font-size: 0.85rem; white-space: nowrap; }
+    th { font-weight: 600; }
     th.sortable { cursor: pointer; user-select: none; }
     th.sortable:hover { background: #2a4f7f; }
     th .sort-icon { margin-left: 4px; opacity: 0.5; font-size: 0.75rem; }
@@ -91,7 +91,7 @@
     .badge-resolved { background: #d4edda; color: #155724; }
 
     .text-muted { color: #888; font-style: italic; font-size: 0.82rem; }
-    .truncate { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .truncate { white-space: nowrap; }
 
     .empty { text-align: center; padding: 48px; color: #aaa; font-size: 0.95rem; }
 
