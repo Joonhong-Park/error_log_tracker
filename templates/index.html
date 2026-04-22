@@ -169,12 +169,7 @@
     <div class="filter-divider"></div>
     <div class="filter-group">
       <span class="filter-label">테이블명</span>
-      <select name="table_name">
-        <option value="">전체</option>
-        {% for tn in table_names %}
-          <option value="{{ tn }}" {% if tn == table_name %}selected{% endif %}>{{ tn }}</option>
-        {% endfor %}
-      </select>
+      <input type="text" name="table_name" value="{{ table_name }}" placeholder="정확히 일치">
     </div>
     <div class="filter-group">
       <span class="filter-label">타입</span>

@@ -110,13 +110,10 @@ def get_list(show_resolved: bool = False, date_from: str = None, date_to: str = 
 
 def get_filter_options():
     with get_conn() as conn:
-        table_names = [r[0] for r in conn.execute(
-            "SELECT DISTINCT table_name FROM error_memo WHERE table_name IS NOT NULL ORDER BY table_name"
-        ).fetchall()]
         table_types = [r[0] for r in conn.execute(
             "SELECT DISTINCT table_type FROM error_memo WHERE table_type IS NOT NULL ORDER BY table_type"
         ).fetchall()]
-    return table_names, table_types
+    return table_types
 
 
 def get_one(file_uuid_id: str):

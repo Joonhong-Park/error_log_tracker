@@ -47,7 +47,7 @@ def index():
         per_page=per_page,
     )
     total_pages = max(1, (total + per_page - 1) // per_page)
-    table_names, table_types = db.get_filter_options()
+    table_types = db.get_filter_options()
 
     return render_template(
         "index.html",
@@ -64,7 +64,6 @@ def index():
         total=total,
         total_pages=total_pages,
         per_page=per_page,
-        table_names=table_names,
         table_types=table_types,
     )
 
