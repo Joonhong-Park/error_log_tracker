@@ -111,10 +111,11 @@
     <thead>
       <tr>
         <th>발생 시각</th>
+        <th>ID</th>
         <th>파일명</th>
-        <th>테이블명</th>
-        <th>테이블 유형</th>
         <th>오류 내용</th>
+        <th>테이블명</th>
+        <th>타입</th>
         <th>원인 파악</th>
         <th>조치 필요 내용</th>
         <th>조치 여부</th>
@@ -123,11 +124,12 @@
     <tbody>
       {% for r in rows %}
       <tr onclick="location.href='{{ url_for('detail', file_uuid_id=r['file_uuid_id']) }}'">
-        <td style="white-space:nowrap;">{{ r['create_ts'] }}</td>
+        <td style="white-space:nowrap;">{{ r['create_time_ts'] }}</td>
+        <td class="truncate" style="font-family:monospace; font-size:0.78rem;">{{ r['file_uuid_id'] }}</td>
         <td class="truncate">{{ r['file_name'] }}</td>
+        <td class="truncate">{{ r['error'] }}</td>
         <td>{{ r['table_name'] }}</td>
         <td>{{ r['table_type'] or '' }}</td>
-        <td class="truncate">{{ r['error'] }}</td>
         <td class="truncate">
           {% if r['root_cause'] %}{{ r['root_cause'] }}
           {% else %}<span class="text-muted">미입력</span>{% endif %}
