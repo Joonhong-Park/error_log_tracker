@@ -101,7 +101,7 @@
     th.sort-active .sort-icon { opacity: 1; }
     tbody tr { border-bottom: 1px solid #e8ecf0; }
     tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: #f0f4f8; cursor: pointer; }
+    tbody tr:hover { background: #f0f4f8; }
 
     .resize-handle {
       position: absolute;
@@ -117,6 +117,18 @@
     .badge-resolved { background: #d4edda; color: #155724; }
 
     .text-muted { color: #888; font-style: italic; font-size: 0.82rem; }
+    .btn-edit {
+      display: inline-block;
+      padding: 3px 10px;
+      background: #e2e8f0;
+      color: #1e3a5f;
+      border-radius: 5px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn-edit:hover { background: #1e3a5f; color: white; }
     .empty { text-align: center; padding: 48px; color: #aaa; font-size: 0.95rem; }
 
     .pagination {
@@ -234,11 +246,12 @@
         <th>원인 파악</th>
         <th>조치 필요 내용</th>
         {{ sort_link('resolved', '조치 여부') }}
+        <th>수정</th>
       </tr>
     </thead>
     <tbody>
       {% for r in rows %}
-      <tr onclick="location.href='{{ url_for('detail', message_id=r['message_id']) }}'">
+      <tr>
         <td>{{ r['create_date_ts'] }}</td>
         <td style="font-family:monospace; font-size:0.78rem;">{{ r['message_id'] }}</td>
         <td>{{ r['table_name'] }}</td>
@@ -259,6 +272,9 @@
           {% else %}
             <span class="badge badge-pending">미완료</span>
           {% endif %}
+        </td>
+        <td onclick="event.stopPropagation()">
+          <a href="{{ url_for('detail', message_id=r['message_id']) }}" class="btn-edit">수정</a>
         </td>
       </tr>
       {% endfor %}
