@@ -170,12 +170,12 @@
   <a href="{{ url_for('sync') }}" class="btn btn-primary">동기화</a>
 
   {% if show_resolved %}
-    <a href="{{ url_for('index', show_resolved='0', date_from=date_from, date_to=date_to, table_name=table_name, table_type=table_type, error_search=error_search, sort_by=sort_by, sort_dir=sort_dir) }}" class="btn btn-secondary">미완료만 보기</a>
+    <a href="{{ url_for('index', show_resolved='0', date_from=date_from, date_to=date_to, table_name=table_name, table_type=table_type, error_search=error_search, cause_search=cause_search, sort_by=sort_by, sort_dir=sort_dir) }}" class="btn btn-secondary">미완료만 보기</a>
   {% else %}
-    <a href="{{ url_for('index', show_resolved='1', date_from=date_from, date_to=date_to, table_name=table_name, table_type=table_type, error_search=error_search, sort_by=sort_by, sort_dir=sort_dir) }}" class="btn btn-secondary">완료 건 포함 보기</a>
+    <a href="{{ url_for('index', show_resolved='1', date_from=date_from, date_to=date_to, table_name=table_name, table_type=table_type, error_search=error_search, cause_search=cause_search, sort_by=sort_by, sort_dir=sort_dir) }}" class="btn btn-secondary">완료 건 포함 보기</a>
   {% endif %}
 
-  <a href="{{ url_for('export', show_resolved='1' if show_resolved else '0', date_from=date_from, date_to=date_to, table_name=table_name, table_type=table_type, error_search=error_search, sort_by=sort_by, sort_dir=sort_dir) }}" class="btn btn-success">Excel 추출</a>
+  <a href="{{ url_for('export', show_resolved='1' if show_resolved else '0', date_from=date_from, date_to=date_to, table_name=table_name, table_type=table_type, error_search=error_search, cause_search=cause_search, sort_by=sort_by, sort_dir=sort_dir) }}" class="btn btn-success">Excel 추출</a>
 
   <span style="margin-left:auto; font-size:0.85rem; color:#666;">
     전체 <strong>{{ total }}</strong>건 &nbsp;/&nbsp; {{ page }}/{{ total_pages }} 페이지
@@ -213,8 +213,12 @@
       <span class="filter-label">오류 검색</span>
       <input type="text" name="error_search" value="{{ error_search }}" placeholder="오류 내용 키워드">
     </div>
+    <div class="filter-group">
+      <span class="filter-label">원인 검색</span>
+      <input type="text" name="cause_search" value="{{ cause_search }}" placeholder="원인 파악 키워드">
+    </div>
     <button type="submit" class="btn btn-primary btn-sm">조회</button>
-    {% if date_from or date_to or table_name or table_type or error_search %}
+    {% if date_from or date_to or table_name or table_type or error_search or cause_search %}
       <a href="{{ url_for('index', show_resolved='1' if show_resolved else '0') }}" class="btn btn-secondary btn-sm">초기화</a>
     {% endif %}
   </div>
@@ -232,7 +236,7 @@
             onclick="location.href='{{ url_for('index', sort_by=col, sort_dir=next_dir,
               show_resolved='1' if show_resolved else '0',
               date_from=date_from, date_to=date_to,
-              table_name=table_name, table_type=table_type, error_search=error_search, page=1) }}'">{{ icon }}</span>
+              table_name=table_name, table_type=table_type, error_search=error_search, cause_search=cause_search, page=1) }}'">{{ icon }}</span>
         </th>
       {% endmacro %}
       <tr>
@@ -290,7 +294,7 @@
     'show_resolved': '1' if show_resolved else '0',
     'date_from': date_from, 'date_to': date_to,
     'table_name': table_name, 'table_type': table_type,
-    'error_search': error_search,
+    'error_search': error_search, 'cause_search': cause_search,
     'sort_by': sort_by, 'sort_dir': sort_dir
   } %}
   <a class="page-btn {% if page == 1 %}disabled{% endif %}"

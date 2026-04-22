@@ -39,6 +39,7 @@ _SORT_COLUMNS = {"create_date_ts", "origin_file_name", "table_name", "table_type
 
 def get_list(show_resolved: bool = False, date_from: str = None, date_to: str = None,
              table_name: str = None, table_type: str = None, error_search: str = None,
+             cause_search: str = None,
              sort_by: str = "create_date_ts", sort_dir: str = "desc",
              page: int = 1, per_page: int = 50):
     if sort_by not in _SORT_COLUMNS:
@@ -63,6 +64,9 @@ def get_list(show_resolved: bool = False, date_from: str = None, date_to: str = 
     if error_search:
         conditions.append("error LIKE ?")
         params.append(f"%{error_search}%")
+    if cause_search:
+        conditions.append("root_cause LIKE ?")
+        params.append(f"%{cause_search}%")
 
     where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
     order = f"ORDER BY {sort_by} {sort_dir}"

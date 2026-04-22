@@ -29,6 +29,7 @@ def index():
     table_name    = request.args.get("table_name", "")
     table_type    = request.args.get("table_type", "")
     error_search  = request.args.get("error_search", "")
+    cause_search  = request.args.get("cause_search", "")
     sort_by       = request.args.get("sort_by", "create_date_ts")
     sort_dir      = request.args.get("sort_dir", "desc")
     try:
@@ -44,6 +45,7 @@ def index():
         table_name=table_name or None,
         table_type=table_type or None,
         error_search=error_search or None,
+        cause_search=cause_search or None,
         sort_by=sort_by,
         sort_dir=sort_dir,
         page=page,
@@ -61,6 +63,7 @@ def index():
         table_name=table_name,
         table_type=table_type,
         error_search=error_search,
+        cause_search=cause_search,
         sort_by=sort_by,
         sort_dir=sort_dir,
         page=page,
@@ -107,12 +110,13 @@ def export():
     table_name    = request.args.get("table_name", "") or None
     table_type    = request.args.get("table_type", "") or None
     error_search  = request.args.get("error_search", "") or None
+    cause_search  = request.args.get("cause_search", "") or None
     sort_by       = request.args.get("sort_by", "create_date_ts")
     sort_dir      = request.args.get("sort_dir", "desc")
     rows, _       = db.get_list(
         show_resolved=show_resolved, date_from=date_from, date_to=date_to,
         table_name=table_name, table_type=table_type, error_search=error_search,
-        sort_by=sort_by, sort_dir=sort_dir, per_page=None,
+        cause_search=cause_search, sort_by=sort_by, sort_dir=sort_dir, per_page=None,
     )
 
     wb = openpyxl.Workbook()
