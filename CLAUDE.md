@@ -39,9 +39,9 @@ templates/            (index.html 목록, detail.html 상세/수정)
 ### 핵심 설계 원칙
 
 - **PostgreSQL은 절대 수정하지 않는다.** `pg_sync.py`는 SELECT만 수행한다.
-- **동기화는 단방향·추가 전용**이다. `upsert_from_pg`는 `file_uuid_id`가 없는 건만 INSERT하며, 이미 존재하는 행의 사용자 입력 필드(`root_cause`, `action_required`, `resolved`)는 건드리지 않는다.
+- **동기화는 단방향·추가 전용**이다. `upsert_from_pg`는 `message_id`가 없는 건만 INSERT하며, 이미 존재하는 행의 사용자 입력 필드(`root_cause`, `action_required`, `resolved`)는 건드리지 않는다.
 - **조치 완료 건은 기본 목록에서 숨긴다.** `get_list(show_resolved=False)`가 기본값이며, `?show_resolved=1` 쿼리 파라미터로 토글한다. Excel 추출도 동일한 파라미터를 따른다.
-- **PG 접속 정보는 `pg_sync.py` 상단 상수로 고정한다.** `.env` 및 DB config 테이블을 사용하지 않는다.
+- **PG 접속 정보는 `pg_sync.py` 상단 상수로 고정한다.** `.env` 및 별도 설정 파일을 사용하지 않는다.
 - **exe 단독 배포가 가능하다.** PyInstaller로 빌드 시 `sys.frozen` 분기로 templates/DB 경로를 보정한다.
 
 ### 모듈별 역할
@@ -62,7 +62,7 @@ templates/            (index.html 목록, detail.html 상세/수정)
 ### 목록 화면 기능
 
 - **페이지네이션**: 50건/페이지, `«` `‹` 숫자 `›` `»` 버튼
-- **필터**: 기간(date_from/date_to), 테이블명(텍스트 정확히 일치), 타입(드롭다운), 오류 내용(LIKE 검색)
+- **필터**: 기간(date_from/date_to), 테이블명(텍스트 정확히 일치), 타입(드롭다운 distinct), 오류 내용(LIKE 검색)
 - **정렬**: 발생시각·파일명·테이블명·타입·조치여부 헤더 클릭 시 ASC/DESC 토글
 - **Excel 추출**: 현재 필터+정렬 상태 그대로 전체 추출
 
@@ -70,16 +70,16 @@ templates/            (index.html 목록, detail.html 상세/수정)
 
 ```
 error_memo (
-    file_uuid_id     TEXT PRIMARY KEY,  -- PG에서 복사
-    create_time_ts   TEXT,              -- PG에서 복사 (YYYY-MM-DD HH:MM:SS)
+    message_id       TEXT PRIMARY KEY,  -- PG에서 복사
+    create_date_ts   TEXT,              -- PG에서 복사 (YYYY-MM-DD HH:MM:SS)
     error            TEXT,              -- PG에서 복사
     table_name       TEXT,              -- PG에서 복사
     table_type       TEXT,              -- PG에서 복사
-    file_name        TEXT,              -- PG에서 복사
+    origin_file_name TEXT,              -- PG에서 복사
     root_cause       TEXT,              -- 사용자 입력
     action_required  TEXT,              -- 사용자 입력
     resolved         INTEGER DEFAULT 0, -- 사용자 입력 (0/1)
-    resolved_time_ts TEXT               -- resolved=1 저장 시 자동 기록 (YYYY-MM-DD HH:MM:SS)
+    resolved_date_ts TEXT               -- resolved=1 저장 시 자동 기록 (YYYY-MM-DD HH:MM:SS)
 )
 ```
 
@@ -93,10 +93,3 @@ if getattr(sys, "frozen", False):
 else:
     DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "error_memo.db")
 ```
-
-### 마이그레이션 처리
-
-`init_db()` 실행 시 구버전 DB를 자동 마이그레이션한다.
-- `create_ts` → `create_time_ts` (RENAME COLUMN)
-- `resolved_at` → `resolved_time_ts` (RENAME COLUMN)
-- `table_type` 컬럼 없으면 ADD COLUMN
