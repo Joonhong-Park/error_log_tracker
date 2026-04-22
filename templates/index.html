@@ -6,9 +6,12 @@
   <title>Error Log Tracker</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; color: #333; }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; color: #333;
+           display: flex; flex-direction: column; }
 
     header {
+      flex-shrink: 0;
       background: #1e3a5f;
       color: white;
       padding: 10px 16px;
@@ -18,8 +21,14 @@
     }
     header h1 { font-size: 1.2rem; font-weight: 600; }
 
+    .flash-list { flex-shrink: 0; padding: 0 16px; }
+    .flash { padding: 8px 14px; border-radius: 6px; margin-top: 6px; font-size: 0.875rem; }
+    .flash.success { background: #d4edda; color: #155724; }
+    .flash.error   { background: #f8d7da; color: #721c24; }
+
     .toolbar {
-      padding: 8px 16px 0;
+      flex-shrink: 0;
+      padding: 6px 16px 0;
       display: flex;
       gap: 8px;
       align-items: center;
@@ -27,7 +36,8 @@
     }
 
     .filter-bar {
-      padding: 6px 16px 10px;
+      flex-shrink: 0;
+      padding: 6px 16px 8px;
       display: flex;
       gap: 6px;
       align-items: center;
@@ -68,16 +78,23 @@
     .btn-success:hover  { background: #3a7d5f; }
     .btn-sm { padding: 5px 12px; font-size: 0.8rem; }
 
-    .flash-list { padding: 0 32px; margin-top: 12px; }
-    .flash { padding: 10px 16px; border-radius: 6px; margin-bottom: 8px; font-size: 0.875rem; }
-    .flash.success { background: #d4edda; color: #155724; }
-    .flash.error   { background: #f8d7da; color: #721c24; }
-
-    .table-wrap { padding: 0 16px; }
-    table { width: max-content; min-width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .table-wrap {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 0 16px 4px;
+    }
+    table {
+      table-layout: fixed;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
     thead { background: #1e3a5f; color: white; }
-    th, td { padding: 7px 10px; text-align: left; font-size: 0.85rem; white-space: nowrap; }
-    th { font-weight: 600; }
+    th, td { padding: 7px 10px; text-align: left; font-size: 0.85rem; white-space: nowrap; overflow: hidden; }
+    th { font-weight: 600; position: relative; }
     th.sortable { cursor: pointer; user-select: none; }
     th.sortable:hover { background: #2a4f7f; }
     th .sort-icon { margin-left: 4px; opacity: 0.5; font-size: 0.75rem; }
@@ -86,24 +103,32 @@
     tbody tr:last-child { border-bottom: none; }
     tbody tr:hover { background: #f0f4f8; cursor: pointer; }
 
+    .resize-handle {
+      position: absolute;
+      right: 0; top: 0;
+      width: 5px; height: 100%;
+      cursor: col-resize;
+      z-index: 1;
+    }
+    .resize-handle:hover { background: rgba(255,255,255,0.35); }
+
     .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; }
     .badge-pending  { background: #fff3cd; color: #856404; }
     .badge-resolved { background: #d4edda; color: #155724; }
 
     .text-muted { color: #888; font-style: italic; font-size: 0.82rem; }
-    .truncate { white-space: nowrap; }
-
     .empty { text-align: center; padding: 48px; color: #aaa; font-size: 0.95rem; }
 
     .pagination {
+      flex-shrink: 0;
       display: flex;
       justify-content: center;
       align-items: center;
       gap: 4px;
-      padding: 20px 32px 32px;
+      padding: 8px 16px;
     }
     .page-btn {
-      padding: 6px 12px;
+      padding: 5px 11px;
       border: 1px solid #d1d5db;
       border-radius: 6px;
       background: white;
@@ -186,7 +211,7 @@
 
 <div class="table-wrap" id="table-wrap">
   {% if rows %}
-  <table>
+  <table id="main-table">
     <thead>
       {% macro sort_link(col, label) %}
         {% set next_dir = 'asc' if (sort_by == col and sort_dir == 'desc') else 'desc' %}
@@ -275,15 +300,68 @@
 {% endif %}
 
 <script>
-  // 페이지 로드 시 저장된 가로 스크롤 위치 복원
-  const savedX = sessionStorage.getItem('pageScrollLeft');
-  if (savedX !== null) {
-    window.scrollTo(parseInt(savedX, 10), window.scrollY);
-    sessionStorage.removeItem('pageScrollLeft');
+  const wrap = document.getElementById('table-wrap');
+  const table = document.getElementById('main-table');
+
+  // ── 컬럼 너비 초기화 및 resize handle 삽입 ──
+  if (table) {
+    const ths = table.querySelectorAll('thead th');
+
+    // 현재 렌더링된 너비를 고정 (table-layout: fixed 전환 준비)
+    ths.forEach(th => { th.style.width = th.offsetWidth + 'px'; });
+    table.style.width = table.offsetWidth + 'px';
+
+    // resize handle 추가
+    ths.forEach(th => {
+      const handle = document.createElement('div');
+      handle.className = 'resize-handle';
+      handle.addEventListener('mousedown', onResizeStart);
+      th.appendChild(handle);
+    });
+
+    let dragging = false, targetTh = null, startX = 0, startW = 0;
+
+    function onResizeStart(e) {
+      e.stopPropagation();
+      dragging = true;
+      targetTh = e.currentTarget.parentElement;
+      startX = e.clientX;
+      startW = targetTh.offsetWidth;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    }
+
+    document.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      const w = Math.max(40, startW + e.clientX - startX);
+      targetTh.style.width = w + 'px';
+      // 테이블 전체 너비 재계산
+      let total = 0;
+      table.querySelectorAll('thead th').forEach(th => { total += th.offsetWidth; });
+      table.style.width = total + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (!dragging) return;
+      dragging = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    });
   }
-  // 페이지 이탈 전 가로 스크롤 위치 저장 (페이징·정렬 클릭 포함)
+
+  // ── 스크롤 위치 저장 / 복원 ──
+  const savedL = sessionStorage.getItem('wrapScrollLeft');
+  const savedT = sessionStorage.getItem('wrapScrollTop');
+  if (wrap && savedL !== null) wrap.scrollLeft = parseInt(savedL, 10);
+  if (wrap && savedT !== null) wrap.scrollTop  = parseInt(savedT, 10);
+  sessionStorage.removeItem('wrapScrollLeft');
+  sessionStorage.removeItem('wrapScrollTop');
+
   window.addEventListener('beforeunload', () => {
-    sessionStorage.setItem('pageScrollLeft', window.scrollX);
+    if (wrap) {
+      sessionStorage.setItem('wrapScrollLeft', wrap.scrollLeft);
+      sessionStorage.setItem('wrapScrollTop',  wrap.scrollTop);
+    }
   });
 </script>
 </body>
