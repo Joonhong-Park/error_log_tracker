@@ -95,9 +95,8 @@
     thead { background: #1e3a5f; color: white; }
     th, td { padding: 7px 10px; text-align: left; font-size: 0.85rem; white-space: nowrap; overflow: hidden; }
     th { font-weight: 600; position: relative; }
-    th.sortable { cursor: pointer; user-select: none; }
-    th.sortable:hover { background: #2a4f7f; }
-    th .sort-icon { margin-left: 4px; opacity: 0.5; font-size: 0.75rem; }
+    th .sort-icon { margin-left: 4px; opacity: 0.45; font-size: 0.8rem; cursor: pointer; user-select: none; padding: 0 2px; border-radius: 3px; }
+    th .sort-icon:hover { opacity: 1; background: rgba(255,255,255,0.2); }
     th.sort-active .sort-icon { opacity: 1; }
     tbody tr { border-bottom: 1px solid #e8ecf0; }
     tbody tr:last-child { border-bottom: none; }
@@ -228,12 +227,12 @@
       {% macro sort_link(col, label) %}
         {% set next_dir = 'asc' if (sort_by == col and sort_dir == 'desc') else 'desc' %}
         {% set icon = '▲' if (sort_by == col and sort_dir == 'asc') else '▼' %}
-        <th class="sortable {% if sort_by == col %}sort-active{% endif %}"
+        <th class="{% if sort_by == col %}sort-active{% endif %}">
+          {{ label }}<span class="sort-icon" title="정렬"
             onclick="location.href='{{ url_for('index', sort_by=col, sort_dir=next_dir,
               show_resolved='1' if show_resolved else '0',
               date_from=date_from, date_to=date_to,
-              table_name=table_name, table_type=table_type, error_search=error_search, page=1) }}'">
-          {{ label }}<span class="sort-icon">{{ icon }}</span>
+              table_name=table_name, table_type=table_type, error_search=error_search, page=1) }}'">{{ icon }}</span>
         </th>
       {% endmacro %}
       <tr>
