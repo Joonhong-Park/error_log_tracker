@@ -184,7 +184,7 @@
   </div>
 </form>
 
-<div class="table-wrap">
+<div class="table-wrap" id="table-wrap">
   {% if rows %}
   <table>
     <thead>
@@ -201,11 +201,11 @@
       {% endmacro %}
       <tr>
         {{ sort_link('create_date_ts', '발생 시각') }}
-        <th>ID</th>
-        {{ sort_link('origin_file_name', '파일명') }}
-        <th>오류 내용</th>
+        <th>message_id</th>
         {{ sort_link('table_name', '테이블명') }}
         {{ sort_link('table_type', '타입') }}
+        <th>오류 내용</th>
+        {{ sort_link('origin_file_name', '파일명') }}
         <th>원인 파악</th>
         <th>조치 필요 내용</th>
         {{ sort_link('resolved', '조치 여부') }}
@@ -214,17 +214,17 @@
     <tbody>
       {% for r in rows %}
       <tr onclick="location.href='{{ url_for('detail', message_id=r['message_id']) }}'">
-        <td style="white-space:nowrap;">{{ r['create_date_ts'] }}</td>
-        <td class="truncate" style="font-family:monospace; font-size:0.78rem;">{{ r['message_id'] }}</td>
-        <td class="truncate">{{ r['origin_file_name'] }}</td>
-        <td class="truncate">{{ r['error'] }}</td>
+        <td>{{ r['create_date_ts'] }}</td>
+        <td style="font-family:monospace; font-size:0.78rem;">{{ r['message_id'] }}</td>
         <td>{{ r['table_name'] }}</td>
         <td>{{ r['table_type'] or '' }}</td>
-        <td class="truncate">
+        <td>{{ r['error'] }}</td>
+        <td>{{ r['origin_file_name'] }}</td>
+        <td>
           {% if r['root_cause'] %}{{ r['root_cause'] }}
           {% else %}<span class="text-muted">미입력</span>{% endif %}
         </td>
-        <td class="truncate">
+        <td>
           {% if r['action_required'] %}{{ r['action_required'] }}
           {% else %}<span class="text-muted">미입력</span>{% endif %}
         </td>
@@ -274,5 +274,18 @@
 </div>
 {% endif %}
 
+<script>
+  const wrap = document.getElementById('table-wrap');
+  // 페이지 로드 시 저장된 스크롤 위치 복원
+  const saved = sessionStorage.getItem('tableScrollLeft');
+  if (wrap && saved !== null) {
+    wrap.scrollLeft = parseInt(saved, 10);
+    sessionStorage.removeItem('tableScrollLeft');
+  }
+  // 페이지 이탈 전 스크롤 위치 저장 (페이징·정렬 클릭 포함)
+  window.addEventListener('beforeunload', () => {
+    if (wrap) sessionStorage.setItem('tableScrollLeft', wrap.scrollLeft);
+  });
+</script>
 </body>
 </html>
