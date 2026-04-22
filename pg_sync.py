@@ -19,7 +19,7 @@ def fetch_from_pg():
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
-                "SELECT file_uuid_id, create_ts, error, table_name, file_name FROM error_log"
+                "SELECT file_uuid_id, create_ts, error, table_name, table_type, file_name FROM error_log"
             )
             rows = cur.fetchall()
         result = []

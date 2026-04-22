@@ -22,6 +22,7 @@ def init_db():
                 create_time_ts  TEXT,
                 error           TEXT,
                 table_name      TEXT,
+                table_type      TEXT,
                 file_name       TEXT,
                 root_cause      TEXT,
                 action_required TEXT,
@@ -35,6 +36,8 @@ def init_db():
             conn.execute("ALTER TABLE error_memo RENAME COLUMN create_ts TO create_time_ts")
         if "resolved_at" in cols:
             conn.execute("ALTER TABLE error_memo RENAME COLUMN resolved_at TO resolved_time_ts")
+        if "table_type" not in cols:
+            conn.execute("ALTER TABLE error_memo ADD COLUMN table_type TEXT")
         conn.commit()
 
 
@@ -48,9 +51,9 @@ def upsert_from_pg(records):
             if not exists:
                 conn.execute(
                     """INSERT INTO error_memo
-                       (file_uuid_id, create_time_ts, error, table_name, file_name)
-                       VALUES (?, ?, ?, ?, ?)""",
-                    (r["file_uuid_id"], r["create_ts"], r["error"], r["table_name"], r["file_name"]),
+                       (file_uuid_id, create_time_ts, error, table_name, table_type, file_name)
+                       VALUES (?, ?, ?, ?, ?, ?)""",
+                    (r["file_uuid_id"], r["create_ts"], r["error"], r["table_name"], r["table_type"], r["file_name"]),
                 )
                 added += 1
         conn.commit()

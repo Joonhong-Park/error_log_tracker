@@ -146,6 +146,9 @@
       <span class="field-label">테이블명</span>
       <span class="field-value">{{ row['table_name'] }}</span>
 
+      <span class="field-label">테이블 유형</span>
+      <span class="field-value">{{ row['table_type'] or '' }}</span>
+
       <span class="field-label">오류 내용</span>
       <span class="field-value error-text">{{ row['error'] }}</span>
     </div>
