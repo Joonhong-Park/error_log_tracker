@@ -35,13 +35,14 @@ pyinstaller --onefile --noconsole --add-data "templates;templates" --name ErrorL
 
 ## 주요 기능
 
-- PostgreSQL `error_log` 동기화 (읽기 전용, 신규 건만 추가)
+- PostgreSQL `error_log` 동기화 (읽기 전용, 신규 건만 추가 — `INSERT OR IGNORE` 일괄 처리)
 - 오류별 원인 파악 / 조치 필요 내용 / 조치 여부 기록
 - 조치 완료 건 숨김 (토글로 표시 가능)
 - 기간 / 테이블명(정확히 일치) / 타입 / 오류 내용 키워드 필터
 - 컬럼 헤더 클릭 정렬 (오름차순/내림차순)
 - 페이지네이션 (50건/페이지)
 - Excel 추출 (현재 필터 기준 전체)
+- 서버는 `127.0.0.1`에만 바인딩 (로컬 전용)
 
 ## SQLite 직접 수정
 

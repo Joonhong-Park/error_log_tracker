@@ -39,18 +39,19 @@ templates/            (index.html 목록, detail.html 상세/수정)
 ### 핵심 설계 원칙
 
 - **PostgreSQL은 절대 수정하지 않는다.** `pg_sync.py`는 SELECT만 수행한다.
-- **동기화는 단방향·추가 전용**이다. `upsert_from_pg`는 `message_id`가 없는 건만 INSERT하며, 이미 존재하는 행의 사용자 입력 필드(`root_cause`, `action_required`, `resolved`)는 건드리지 않는다.
+- **동기화는 단방향·추가 전용**이다. `upsert_from_pg`는 `INSERT OR IGNORE`로 신규 건만 INSERT하며, 이미 존재하는 행의 사용자 입력 필드(`root_cause`, `action_required`, `resolved`)는 건드리지 않는다.
 - **조치 완료 건은 기본 목록에서 숨긴다.** `get_list(show_resolved=False)`가 기본값이며, `?show_resolved=1` 쿼리 파라미터로 토글한다. Excel 추출도 동일한 파라미터를 따른다.
 - **PG 접속 정보는 `pg_sync.py` 상단 상수로 고정한다.** `.env` 및 별도 설정 파일을 사용하지 않는다.
 - **exe 단독 배포가 가능하다.** PyInstaller로 빌드 시 `sys.frozen` 분기로 templates/DB 경로를 보정한다.
+- **서버는 `127.0.0.1`에만 바인딩한다.** 개인용 로컬 앱이므로 외부 네트워크에 노출하지 않는다.
 
 ### 모듈별 역할
 
 | 파일 | 역할 |
 |------|------|
-| `pg_sync.py` | 상단 상수로 PG 접속 정보 관리. `error_log` 전체 SELECT 후 `db.upsert_from_pg` 호출. PG timestamp → `YYYY-MM-DD HH:MM:SS` 변환 |
-| `db.py` | SQLite CRUD. `DB_PATH`는 실행 환경(개발/exe)에 따라 자동 결정. `get_filter_options()`로 타입 드롭다운용 distinct 값 제공 |
-| `app.py` | Flask 라우팅. 앱 시작 시 `db.init_db()` 자동 호출. exe 빌드 시 template_folder 경로 보정 및 브라우저 자동 오픈 |
+| `pg_sync.py` | 상단 상수로 PG 접속 정보 관리. `error_log` 전체 SELECT 후 `upsert_from_pg` 호출. PG timestamp → `YYYY-MM-DD HH:MM:SS` 변환 |
+| `db.py` | SQLite CRUD. `DB_PATH`는 실행 환경(개발/exe)에 따라 자동 결정. `upsert_from_pg`는 `INSERT OR IGNORE` + `executemany`로 N+1 없이 일괄 처리. `get_filter_options()`로 타입 드롭다운용 distinct 값 제공 |
+| `app.py` | Flask 라우팅. 앱 시작 시 `db.init_db()` 자동 호출. exe 빌드 시 template_folder 경로 보정. 1초 딜레이 후 브라우저 자동 오픈 (서버 준비 대기) |
 
 ### 데이터 흐름 — 동기화 시
 

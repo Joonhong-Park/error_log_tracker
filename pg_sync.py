@@ -1,5 +1,6 @@
 import psycopg2
 import psycopg2.extras
+from db import upsert_from_pg
 
 PG_HOST     = "your_host"
 PG_PORT     = "5432"
@@ -34,7 +35,6 @@ def fetch_from_pg():
 
 
 def sync():
-    from db import upsert_from_pg
     records = fetch_from_pg()
     added = upsert_from_pg(records)
     return len(records), added

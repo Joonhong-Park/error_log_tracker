@@ -31,7 +31,10 @@ def index():
     error_search  = request.args.get("error_search", "")
     sort_by       = request.args.get("sort_by", "create_date_ts")
     sort_dir      = request.args.get("sort_dir", "desc")
-    page          = max(1, int(request.args.get("page", 1)))
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+    except (ValueError, TypeError):
+        page = 1
     per_page      = 50
 
     rows, total = db.get_list(
@@ -184,5 +187,6 @@ def export():
 
 
 if __name__ == "__main__":
-    webbrowser.open("http://localhost:5000")
-    app.run(debug=False, host="0.0.0.0", port=5000)
+    import threading
+    threading.Timer(1.0, lambda: webbrowser.open("http://localhost:5000")).start()
+    app.run(debug=False, host="127.0.0.1", port=5000)

@@ -1,6 +1,7 @@
 import sqlite3
 import os
 import sys
+from datetime import datetime
 
 if getattr(sys, "frozen", False):
     DB_PATH = os.path.join(os.path.dirname(sys.executable), "error_memo.db")
@@ -91,21 +92,14 @@ def get_filter_options():
 
 def upsert_from_pg(records):
     with get_conn() as conn:
-        added = 0
-        for r in records:
-            exists = conn.execute(
-                "SELECT 1 FROM error_memo WHERE message_id = ?", (r["message_id"],)
-            ).fetchone()
-            if not exists:
-                conn.execute(
-                    """INSERT INTO error_memo
-                       (message_id, create_date_ts, error, table_name, table_type, origin_file_name)
-                       VALUES (?, ?, ?, ?, ?, ?)""",
-                    (r["message_id"], r["create_date_ts"], r["error"], r["table_name"], r["table_type"], r["origin_file_name"]),
-                )
-                added += 1
+        cur = conn.executemany(
+            """INSERT OR IGNORE INTO error_memo
+               (message_id, create_date_ts, error, table_name, table_type, origin_file_name)
+               VALUES (:message_id, :create_date_ts, :error, :table_name, :table_type, :origin_file_name)""",
+            records,
+        )
         conn.commit()
-    return added
+    return cur.rowcount
 
 
 def get_one(message_id: str):
@@ -116,7 +110,6 @@ def get_one(message_id: str):
 
 
 def update_memo(message_id: str, root_cause: str, action_required: str, resolved: bool):
-    from datetime import datetime
     resolved_date_ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S") if resolved else None
 
     with get_conn() as conn:
