@@ -35,8 +35,6 @@ def init_db():
         cols = {r[1] for r in conn.execute("PRAGMA table_info(error_memo)").fetchall()}
         if "action_taken" not in cols:
             conn.execute("ALTER TABLE error_memo ADD COLUMN action_taken TEXT")
-        if "table_type" in cols:
-            conn.execute("ALTER TABLE error_memo RENAME COLUMN table_type TO load_type")
         conn.commit()
 
 
