@@ -27,10 +27,14 @@ def init_db():
                 origin_file_name TEXT,
                 root_cause       TEXT,
                 action_required  TEXT,
+                action_taken     TEXT,
                 resolved         INTEGER DEFAULT 0,
                 resolved_date_ts TEXT
             )
         """)
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(error_memo)").fetchall()}
+        if "action_taken" not in cols:
+            conn.execute("ALTER TABLE error_memo ADD COLUMN action_taken TEXT")
         conn.commit()
 
 
@@ -113,14 +117,14 @@ def get_one(message_id: str):
         ).fetchone()
 
 
-def update_memo(message_id: str, root_cause: str, action_required: str, resolved: bool):
+def update_memo(message_id: str, root_cause: str, action_required: str, action_taken: str, resolved: bool):
     resolved_date_ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S") if resolved else None
 
     with get_conn() as conn:
         conn.execute(
             """UPDATE error_memo
-               SET root_cause = ?, action_required = ?, resolved = ?, resolved_date_ts = ?
+               SET root_cause = ?, action_required = ?, action_taken = ?, resolved = ?, resolved_date_ts = ?
                WHERE message_id = ?""",
-            (root_cause, action_required, int(resolved), resolved_date_ts, message_id),
+            (root_cause, action_required, action_taken, int(resolved), resolved_date_ts, message_id),
         )
         conn.commit()

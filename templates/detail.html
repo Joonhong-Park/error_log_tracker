@@ -169,6 +169,11 @@
       </div>
 
       <div class="form-row">
+        <label for="action_taken">실제 조치 내용</label>
+        <textarea id="action_taken" name="action_taken" placeholder="실제로 조치한 내용을 입력하세요">{{ row['action_taken'] or '' }}</textarea>
+      </div>
+
+      <div class="form-row">
         <div class="resolved-toggle">
           <label class="switch">
             <input type="checkbox" name="resolved" value="1" id="resolved-toggle"

@@ -94,8 +94,9 @@ def detail(message_id):
     if request.method == "POST":
         root_cause = request.form.get("root_cause", "").strip()
         action_required = request.form.get("action_required", "").strip()
+        action_taken = request.form.get("action_taken", "").strip()
         resolved = request.form.get("resolved") == "1"
-        db.update_memo(message_id, root_cause, action_required, resolved)
+        db.update_memo(message_id, root_cause, action_required, action_taken, resolved)
         flash("저장되었습니다.", "success")
         return redirect(url_for("index"))
 
@@ -133,8 +134,8 @@ def export():
     )
     cell_align     = Alignment(vertical="top", wrap_text=True)
 
-    headers = ["발생 시각", "파일명", "테이블명", "오류 내용", "원인 파악", "조치 필요 내용", "조치 여부", "완료 일시"]
-    col_widths = [20, 30, 20, 50, 35, 35, 12, 20]
+    headers = ["발생 시각", "파일명", "테이블명", "오류 내용", "원인 파악", "조치 필요 내용", "실제 조치 내용", "조치 여부", "완료 일시"]
+    col_widths = [20, 30, 20, 50, 35, 35, 35, 12, 20]
 
     for col_idx, (header, width) in enumerate(zip(headers, col_widths), start=1):
         cell = ws.cell(row=1, column=col_idx, value=header)
@@ -159,6 +160,7 @@ def export():
             r["error"],
             r["root_cause"] or "",
             r["action_required"] or "",
+            r["action_taken"] or "",
             resolved_text,
             r["resolved_date_ts"] or "",
         ]
@@ -169,7 +171,7 @@ def export():
             cell.alignment = cell_align
             cell.border    = thin_border
             # 조치여부 컬럼만 배경색 적용
-            if col_idx == 7:
+            if col_idx == 8:
                 cell.fill = row_fill
 
     # 첫 행 고정

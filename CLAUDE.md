@@ -79,6 +79,7 @@ error_memo (
     origin_file_name TEXT,              -- PG에서 복사
     root_cause       TEXT,              -- 사용자 입력
     action_required  TEXT,              -- 사용자 입력
+    action_taken     TEXT,              -- 사용자 입력 (실제 조치 내용)
     resolved         INTEGER DEFAULT 0, -- 사용자 입력 (0/1)
     resolved_date_ts TEXT               -- resolved=1 저장 시 자동 기록 (YYYY-MM-DD HH:MM:SS)
 )
