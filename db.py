@@ -32,9 +32,37 @@ def init_db():
                 resolved_date_ts TEXT
             )
         """)
-        cols = {r[1] for r in conn.execute("PRAGMA table_info(error_memo)").fetchall()}
-        if "action_taken" not in cols:
+        col_order = [r[1] for r in conn.execute("PRAGMA table_info(error_memo)").fetchall()]
+        # action_taken 없으면 ADD COLUMN (맨 뒤에 붙음)
+        if "action_taken" not in col_order:
             conn.execute("ALTER TABLE error_memo ADD COLUMN action_taken TEXT")
+            col_order = [r[1] for r in conn.execute("PRAGMA table_info(error_memo)").fetchall()]
+        # action_taken이 resolved보다 뒤에 있으면 테이블 재생성으로 순서 교정
+        if col_order.index("action_taken") > col_order.index("resolved"):
+            conn.execute("ALTER TABLE error_memo RENAME TO _error_memo_old")
+            conn.execute("""
+                CREATE TABLE error_memo (
+                    message_id       TEXT PRIMARY KEY,
+                    create_date_ts   TEXT,
+                    error            TEXT,
+                    table_name       TEXT,
+                    load_type        TEXT,
+                    origin_file_name TEXT,
+                    root_cause       TEXT,
+                    action_required  TEXT,
+                    action_taken     TEXT,
+                    resolved         INTEGER DEFAULT 0,
+                    resolved_date_ts TEXT
+                )
+            """)
+            conn.execute("""
+                INSERT INTO error_memo
+                SELECT message_id, create_date_ts, error, table_name, load_type,
+                       origin_file_name, root_cause, action_required, action_taken,
+                       resolved, resolved_date_ts
+                FROM _error_memo_old
+            """)
+            conn.execute("DROP TABLE _error_memo_old")
         conn.commit()
 
 
