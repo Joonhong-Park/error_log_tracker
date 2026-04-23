@@ -20,7 +20,7 @@ def init_db():
         conn.execute("""
             CREATE TABLE IF NOT EXISTS error_memo (
                 message_id       TEXT PRIMARY KEY,
-                create_date_ts   TEXT,
+                create_timestamp TEXT,
                 error            TEXT,
                 table_name       TEXT,
                 table_type       TEXT,
@@ -28,32 +28,38 @@ def init_db():
                 root_cause       TEXT,
                 action_required  TEXT,
                 resolved         INTEGER DEFAULT 0,
-                resolved_date_ts TEXT
+                resolved_timestamp TEXT
             )
         """)
+        # 기존 DB 컬럼명 마이그레이션
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(error_memo)").fetchall()}
+        if "create_date_ts" in cols:
+            conn.execute("ALTER TABLE error_memo RENAME COLUMN create_date_ts TO create_timestamp")
+        if "resolved_date_ts" in cols:
+            conn.execute("ALTER TABLE error_memo RENAME COLUMN resolved_date_ts TO resolved_timestamp")
         conn.commit()
 
 
-_SORT_COLUMNS = {"create_date_ts", "origin_file_name", "table_name", "table_type", "resolved"}
+_SORT_COLUMNS = {"create_timestamp", "origin_file_name", "table_name", "table_type", "resolved"}
 
 
 def get_list(show_resolved: bool = False, date_from: str = None, date_to: str = None,
              table_name: str = None, table_type: str = None, error_search: str = None,
              cause_search: str = None,
-             sort_by: str = "create_date_ts", sort_dir: str = "desc",
+             sort_by: str = "create_timestamp", sort_dir: str = "desc",
              page: int = 1, per_page: int = 50):
     if sort_by not in _SORT_COLUMNS:
-        sort_by = "create_date_ts"
+        sort_by = "create_timestamp"
     sort_dir = "ASC" if sort_dir.lower() == "asc" else "DESC"
 
     conditions, params = [], []
     if not show_resolved:
         conditions.append("resolved = 0")
     if date_from:
-        conditions.append("create_date_ts >= ?")
+        conditions.append("create_timestamp >= ?")
         params.append(date_from + " 00:00:00")
     if date_to:
-        conditions.append("create_date_ts <= ?")
+        conditions.append("create_timestamp <= ?")
         params.append(date_to + " 23:59:59")
     if table_name:
         conditions.append("table_name = ?")
@@ -98,7 +104,7 @@ def upsert_from_pg(records):
     with get_conn() as conn:
         cur = conn.executemany(
             """INSERT OR IGNORE INTO error_memo
-               (message_id, create_date_ts, error, table_name, table_type, origin_file_name)
+               (message_id, create_timestamp, error, table_name, table_type, origin_file_name)
                VALUES (:message_id, :create_date_ts, :error, :table_name, :table_type, :origin_file_name)""",
             records,
         )
@@ -114,13 +120,13 @@ def get_one(message_id: str):
 
 
 def update_memo(message_id: str, root_cause: str, action_required: str, resolved: bool):
-    resolved_date_ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S") if resolved else None
+    resolved_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S") if resolved else None
 
     with get_conn() as conn:
         conn.execute(
             """UPDATE error_memo
-               SET root_cause = ?, action_required = ?, resolved = ?, resolved_date_ts = ?
+               SET root_cause = ?, action_required = ?, resolved = ?, resolved_timestamp = ?
                WHERE message_id = ?""",
-            (root_cause, action_required, int(resolved), resolved_date_ts, message_id),
+            (root_cause, action_required, int(resolved), resolved_timestamp, message_id),
         )
         conn.commit()

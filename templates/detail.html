@@ -138,7 +138,7 @@
       <span class="field-value" style="font-family:monospace; font-size:0.83rem;">{{ row['message_id'] }}</span>
 
       <span class="field-label">발생 시각</span>
-      <span class="field-value">{{ row['create_date_ts'] }}</span>
+      <span class="field-value">{{ row['create_timestamp'] }}</span>
 
       <span class="field-label">파일명</span>
       <span class="field-value">{{ row['origin_file_name'] }}</span>
@@ -179,8 +179,8 @@
             {% if row['resolved'] %}조치 완료{% else %}미완료{% endif %}
           </span>
         </div>
-        {% if row['resolved'] and row['resolved_date_ts'] %}
-          <div class="resolved-info">완료 처리 일시: {{ row['resolved_date_ts'] }}</div>
+        {% if row['resolved'] and row['resolved_timestamp'] %}
+          <div class="resolved-info">완료 처리 일시: {{ row['resolved_timestamp'] }}</div>
         {% endif %}
       </div>
 

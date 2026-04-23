@@ -71,16 +71,16 @@ templates/            (index.html 목록, detail.html 상세/수정)
 
 ```
 error_memo (
-    message_id       TEXT PRIMARY KEY,  -- PG에서 복사
-    create_date_ts   TEXT,              -- PG에서 복사 (YYYY-MM-DD HH:MM:SS)
-    error            TEXT,              -- PG에서 복사
-    table_name       TEXT,              -- PG에서 복사
-    table_type       TEXT,              -- PG에서 복사
-    origin_file_name TEXT,              -- PG에서 복사
-    root_cause       TEXT,              -- 사용자 입력
-    action_required  TEXT,              -- 사용자 입력
-    resolved         INTEGER DEFAULT 0, -- 사용자 입력 (0/1)
-    resolved_date_ts TEXT               -- resolved=1 저장 시 자동 기록 (YYYY-MM-DD HH:MM:SS)
+    message_id         TEXT PRIMARY KEY,  -- PG에서 복사
+    create_timestamp   TEXT,              -- PG에서 복사 (YYYY-MM-DD HH:MM:SS)
+    error              TEXT,              -- PG에서 복사
+    table_name         TEXT,              -- PG에서 복사
+    table_type         TEXT,              -- PG에서 복사
+    origin_file_name   TEXT,              -- PG에서 복사
+    root_cause         TEXT,              -- 사용자 입력
+    action_required    TEXT,              -- 사용자 입력
+    resolved           INTEGER DEFAULT 0, -- 사용자 입력 (0/1)
+    resolved_timestamp TEXT               -- resolved=1 저장 시 자동 기록 (YYYY-MM-DD HH:MM:SS)
 )
 ```
 
