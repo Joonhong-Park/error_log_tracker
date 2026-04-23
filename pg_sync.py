@@ -20,7 +20,7 @@ def fetch_from_pg():
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
-                "SELECT message_id, create_date_ts, error, table_name, table_type, origin_file_name FROM error_log"
+                "SELECT message_id, create_date_ts, error, table_name, load_type, origin_file_name FROM error_log"
             )
             rows = cur.fetchall()
         result = []

@@ -105,7 +105,7 @@ def upsert_from_pg(records):
         cur = conn.executemany(
             """INSERT OR IGNORE INTO error_memo
                (message_id, create_date_ts, error, table_name, load_type, origin_file_name)
-               VALUES (:message_id, :create_date_ts, :error, :table_name, :table_type, :origin_file_name)""",
+               VALUES (:message_id, :create_date_ts, :error, :table_name, :load_type, :origin_file_name)""",
             records,
         )
         conn.commit()
