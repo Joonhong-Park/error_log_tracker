@@ -258,7 +258,7 @@
     <tbody>
       {% for r in rows %}
       <tr>
-        <td>{{ r['create_timestamp'] }}</td>
+        <td>{{ r['create_date_ts'] }}</td>
         <td style="font-family:monospace; font-size:0.78rem;">{{ r['message_id'] }}</td>
         <td>{{ r['table_name'] }}</td>
         <td>{{ r['table_type'] or '' }}</td>
