@@ -75,7 +75,7 @@ error_memo (
     create_date_ts   TEXT,              -- PG에서 복사 (YYYY-MM-DD HH:MM:SS)
     error            TEXT,              -- PG에서 복사
     table_name       TEXT,              -- PG에서 복사
-    table_type       TEXT,              -- PG에서 복사
+    load_type       TEXT,              -- PG에서 복사
     origin_file_name TEXT,              -- PG에서 복사
     root_cause       TEXT,              -- 사용자 입력
     action_required  TEXT,              -- 사용자 입력

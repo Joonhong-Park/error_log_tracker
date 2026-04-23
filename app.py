@@ -27,7 +27,7 @@ def index():
     date_from     = request.args.get("date_from", "")
     date_to       = request.args.get("date_to", "")
     table_name    = request.args.get("table_name", "")
-    table_type    = request.args.get("table_type", "")
+    load_type     = request.args.get("load_type", "")
     error_search  = request.args.get("error_search", "")
     cause_search  = request.args.get("cause_search", "")
     sort_by       = request.args.get("sort_by", "create_date_ts")
@@ -43,7 +43,7 @@ def index():
         date_from=date_from or None,
         date_to=date_to or None,
         table_name=table_name or None,
-        table_type=table_type or None,
+        load_type=load_type or None,
         error_search=error_search or None,
         cause_search=cause_search or None,
         sort_by=sort_by,
@@ -52,7 +52,7 @@ def index():
         per_page=per_page,
     )
     total_pages = max(1, (total + per_page - 1) // per_page)
-    table_types = db.get_filter_options()
+    load_types = db.get_filter_options()
 
     return render_template(
         "index.html",
@@ -61,7 +61,7 @@ def index():
         date_from=date_from,
         date_to=date_to,
         table_name=table_name,
-        table_type=table_type,
+        load_type=load_type,
         error_search=error_search,
         cause_search=cause_search,
         sort_by=sort_by,
@@ -70,7 +70,7 @@ def index():
         total=total,
         total_pages=total_pages,
         per_page=per_page,
-        table_types=table_types,
+        load_types=load_types,
     )
 
 
@@ -109,14 +109,14 @@ def export():
     date_from     = request.args.get("date_from", "") or None
     date_to       = request.args.get("date_to", "") or None
     table_name    = request.args.get("table_name", "") or None
-    table_type    = request.args.get("table_type", "") or None
+    load_type     = request.args.get("load_type", "") or None
     error_search  = request.args.get("error_search", "") or None
     cause_search  = request.args.get("cause_search", "") or None
     sort_by       = request.args.get("sort_by", "create_date_ts")
     sort_dir      = request.args.get("sort_dir", "desc")
     rows, _       = db.get_list(
         show_resolved=show_resolved, date_from=date_from, date_to=date_to,
-        table_name=table_name, table_type=table_type, error_search=error_search,
+        table_name=table_name, load_type=load_type, error_search=error_search,
         cause_search=cause_search, sort_by=sort_by, sort_dir=sort_dir, per_page=None,
     )
 

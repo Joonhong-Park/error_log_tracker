@@ -23,7 +23,7 @@ def init_db():
                 create_date_ts   TEXT,
                 error            TEXT,
                 table_name       TEXT,
-                table_type       TEXT,
+                load_type        TEXT,
                 origin_file_name TEXT,
                 root_cause       TEXT,
                 action_required  TEXT,
@@ -35,14 +35,16 @@ def init_db():
         cols = {r[1] for r in conn.execute("PRAGMA table_info(error_memo)").fetchall()}
         if "action_taken" not in cols:
             conn.execute("ALTER TABLE error_memo ADD COLUMN action_taken TEXT")
+        if "table_type" in cols:
+            conn.execute("ALTER TABLE error_memo RENAME COLUMN table_type TO load_type")
         conn.commit()
 
 
-_SORT_COLUMNS = {"create_date_ts", "origin_file_name", "table_name", "table_type", "resolved"}
+_SORT_COLUMNS = {"create_date_ts", "origin_file_name", "table_name", "load_type", "resolved"}
 
 
 def get_list(show_resolved: bool = False, date_from: str = None, date_to: str = None,
-             table_name: str = None, table_type: str = None, error_search: str = None,
+             table_name: str = None, load_type: str = None, error_search: str = None,
              cause_search: str = None,
              sort_by: str = "create_date_ts", sort_dir: str = "desc",
              page: int = 1, per_page: int = 50):
@@ -62,9 +64,9 @@ def get_list(show_resolved: bool = False, date_from: str = None, date_to: str = 
     if table_name:
         conditions.append("table_name = ?")
         params.append(table_name)
-    if table_type:
-        conditions.append("table_type = ?")
-        params.append(table_type)
+    if load_type:
+        conditions.append("load_type = ?")
+        params.append(load_type)
     if error_search:
         conditions.append("error LIKE ?")
         params.append(f"%{error_search}%")
@@ -92,17 +94,17 @@ def get_list(show_resolved: bool = False, date_from: str = None, date_to: str = 
 
 def get_filter_options():
     with get_conn() as conn:
-        table_types = [r[0] for r in conn.execute(
-            "SELECT DISTINCT table_type FROM error_memo WHERE table_type IS NOT NULL ORDER BY table_type"
+        load_types = [r[0] for r in conn.execute(
+            "SELECT DISTINCT load_type FROM error_memo WHERE load_type IS NOT NULL ORDER BY load_type"
         ).fetchall()]
-    return table_types
+    return load_types
 
 
 def upsert_from_pg(records):
     with get_conn() as conn:
         cur = conn.executemany(
             """INSERT OR IGNORE INTO error_memo
-               (message_id, create_date_ts, error, table_name, table_type, origin_file_name)
+               (message_id, create_date_ts, error, table_name, load_type, origin_file_name)
                VALUES (:message_id, :create_date_ts, :error, :table_name, :table_type, :origin_file_name)""",
             records,
         )
