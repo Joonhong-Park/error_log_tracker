@@ -42,16 +42,12 @@ A 테이블은 현재 에러 로그 기록 용도로 운영 중이며, 재시도
 
 ## 4. 사전 준비
 
-### 4-1. Auto Commit OFF 확인
-- DBeaver 하단 상태바 `Auto` 버튼 비활성화 확인
-- 또는 상단 메뉴 `Connection` → `Auto-commit` 체크 해제
-
-### 4-2. 백업 수행
+### 4-1. 백업 수행
 - DBeaver 상단 메뉴 `Database` → `Backup`
 - 대상 테이블 A 선택
 - Format: `Custom` 선택 후 실행
 
-### 4-3. 현재 테이블 구조 스냅샷 저장
+### 4-2. 현재 테이블 구조 스냅샷 저장
 
 ```sql
 SELECT column_name, data_type, is_nullable
@@ -64,13 +60,7 @@ ORDER BY ordinal_position;
 
 ## 5. 작업 순서
 
-### Step 1. 트랜잭션 시작
-
-```sql
-BEGIN;
-```
-
-### Step 2. 컬럼 추가
+### Step 1. 컬럼 추가
 
 ```sql
 ALTER TABLE A
@@ -80,7 +70,7 @@ ALTER TABLE A
     ADD COLUMN error_reason  TEXT;
 ```
 
-### Step 3. 변경 내용 확인
+### Step 2. 변경 내용 확인
 
 ```sql
 SELECT column_name, data_type, is_nullable
@@ -89,25 +79,15 @@ WHERE table_name = 'a'
 ORDER BY ordinal_position;
 ```
 
-### Step 4. 커밋
+### Step 3. 인덱스 생성
 
-```sql
-COMMIT;
-```
-
-> ⚠️ Step 3 확인 후 이상 없을 때만 COMMIT. 문제 발생 시 ROLLBACK 수행
-
-### Step 5. 인덱스 생성
-
-COMMIT 완료 후 **새 SQL 탭**에서 실행
+**새 SQL 탭**에서 실행
 
 ```sql
 CREATE INDEX a_update_date_idx ON A (update_date);
 ```
 
-> ⚠️ CREATE INDEX는 트랜잭션 외부에서 수행. Step 4 COMMIT 완료 후 별도 실행
-
-### Step 6. 최종 검증
+### Step 4. 최종 검증
 
 ```sql
 -- 컬럼 확인
@@ -128,13 +108,24 @@ WHERE tablename = 'a';
 
 | 상황 | 조치 |
 |---|---|
-| Step 4 COMMIT 이전 이상 감지 | SQL 편집기에서 ROLLBACK 수행 |
-| COMMIT 이후 이상 감지 | DBeaver Restore로 백업본 복구 |
+| 컬럼 추가 후 이상 감지 | 추가된 컬럼 DROP 후 재작업 |
+| 인덱스 생성 후 이상 감지 | 인덱스 DROP 후 재작업 |
+| 복구가 필요한 경우 | DBeaver Restore로 백업본 복구 |
 
-### 트랜잭션 롤백
+### 컬럼 DROP
 
 ```sql
-ROLLBACK;
+ALTER TABLE A
+    DROP COLUMN retry_status,
+    DROP COLUMN uuid,
+    DROP COLUMN update_date,
+    DROP COLUMN error_reason;
+```
+
+### 인덱스 DROP
+
+```sql
+DROP INDEX a_update_date_idx;
 ```
 
 ### 백업 복구 절차
@@ -145,7 +136,6 @@ ROLLBACK;
 
 ## 7. 작업 후 확인 항목
 
-- [ ] Auto Commit OFF 상태로 작업 수행 여부 확인
 - [ ] 추가된 컬럼 4개 정상 확인
 - [ ] 기존 데이터 정합성 이상 없음 (기존 row의 신규 컬럼값 NULL 정상)
 - [ ] 인덱스 생성 정상 확인
